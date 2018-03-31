@@ -2,6 +2,10 @@
 <html>
     
     <head>
+
+        <script src="https://code.jquery.com/jquery-3.1.0.js"></script>        
+        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+        <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
         <link rel="stylesheet" href="style.css">
         <link rel="shortcut icon" href="imgs/logo.png" type="image/png">
@@ -100,7 +104,17 @@
             </div>
             
             <div class="container cont" id="About">
-                About
+                <div id="dialog-message" title="About Modal">
+                    <p>
+                       Nadav Grinberg | Guy Zaks
+                    </p>
+                    <p>
+                        <b>Jquery</b> was used for Modal, selecting object within the page & add event listeners
+                    </p>
+                    <p>
+                        Never used any templates
+                    </p>
+                </div>
             </div>
             
             <div class="container cont" id="Game">
@@ -120,9 +134,7 @@
             </div>
         </footer>
         
-        <script src="https://code.jquery.com/jquery.min.js"></script>
         <script src="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>
-        <script src="https://code.jquery.com/jquery-3.1.0.js"></script>
 		<script src="script.js"></script>
     </body>
 
