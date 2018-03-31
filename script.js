@@ -227,7 +227,7 @@ function showContainer(container){
     if(container == "Register"){
         _formValidation = newFormValidation();
         setFormDates();
-        $("form>.btn").prop('disabled',true);
+        $("#regForm>.btn").prop('disabled',true);
     }
     
 }
@@ -282,7 +282,7 @@ function formIsOK(form, prop){
             formIsDone = formIsDone && false;
     });
 
-    $("form>.btn").prop('disabled',!formIsDone);
+    $("#regForm>.btn").prop('disabled',!formIsDone);
 }
 
 function checkPassword(form){
@@ -304,11 +304,22 @@ function checkUsername(form){
     if(user.length == 0 && _formValidation.username == false)
         return;
 
-    if(user.length <= 1){
+    if(user.length <= 1 || usernameFound(user)){
         formHasErr(form,'username');
     }else{
         formIsOK(form,'username');
     }
+}
+
+function usernameFound(user){
+    let filteredUser = users.filter(function(user){
+        return user.username == username;
+    });
+
+    if(filteredUser.length == 0)
+        return false;
+    
+    return true;
 }
 
 function checkFirst(form){
@@ -380,14 +391,37 @@ function submitForm(){
         'date': date
     });
 
-    clearForm();
+    clearForm("regForm");
     showContainer('Login');
 }
 
-function clearForm(){
-    $("form").find(".form-control").each((key,val)=>{
+function clearForm(formID){
+    $("#" + formID).find(".form-control").each((key,val)=>{
         $(val).val('');
         $(val).removeClass('formOK');
         $(val).removeClass('formErr');
     });
+}
+
+//Login Form
+function submitLogin(){
+    let msg = $("#loginMsg");
+    msg.hide();
+
+    let username = $("#log_username").val().trim();
+    let password = $("#log_password").val().trim();
+
+    let filteredUser = users.filter(function(user){
+        return user.password == password && user.username == username;
+    });
+
+    if(filteredUser.length == 0){
+        msg.text("Username and Password does not match");
+        msg.show();
+
+        $("#log_username").focus();
+        $("#log_password").val("");
+    }else{
+        alert('success!');
+    }
 }

@@ -50,7 +50,8 @@
             </div>
             
             <div class="container cont" id="Register">
-                <form action="#">
+                <h1>Registration Form</h1>
+                <form id="regForm" action="#">
                     <label>Username:</label>
                     <input required class="form-control" type="text" name="username" id="form_username" onblur="checkUsername(this)" placeholder="Username"/>
 
@@ -84,7 +85,18 @@
             </div>
             
             <div class="container cont" id="Login">
-                Login
+                <h1>Login Form</h1>
+                <form id="logForm" action="#">
+                    <div class="alert alert-danger" role="alert" id="loginMsg"></div>
+
+                    <label>Username:</label>
+                    <input required class="form-control" type="text" name="username" id="log_username" placeholder="Username"/>
+
+                    <label>Password:</label>
+                    <input required class="form-control" type="password" name="password" id="log_password" placeholder="Password"/>
+
+                    <input type="button" class="btn btn-info" value="Login" onclick="submitLogin()">
+                </form>
             </div>
             
             <div class="container cont" id="About">
