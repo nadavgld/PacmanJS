@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+    
+    <head>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+        <link rel="stylesheet" href="style.css">
+        <link rel="shortcut icon" href="imgs/logo.png" type="image/png">
+        <title>Pacman</title>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    </head>
+    
+    <body>
+        <header>
+            <nav class="navbar navbar-inverse navbar-top">
+                <div class="container">
+                    <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                        <a class="navbar-brand" href="#">
+                            <img src="imgs/logo.png" alt="" id="menuLogo">
+                            Pacman JS
+                        </a>
+                    </div>
+                    <div id="navbar" class="collapse navbar-collapse">
+                    <ul class="nav navbar-nav">
+                        <li class="red"><a href="#">Welcome</a></li>
+                        <li class="green"><a href="#">Register</a></li>
+                        <li class="yellow"><a href="#">Login</a></li>
+                        <li class="blue"><a href="#">About</a></li>
+                        <li><a href="#" class="not-active"> [ Nadav Grinberg Guy Zaks ]</a></li>
+                    </ul>
+                    </div><!--/.nav-collapse -->
+                </div>
+            </nav>
+        </header>
+
+        <div id="content">
+            <div class="container cont" id="Welcome">
+                <div class="row" id="welcomeContent">
+                    <button class="btn btn-success"> <span class="glyphicon glyphicon-pencil pull-left" aria-hidden="true"></span> Register</button>
+                    <button class="btn btn-warning"> <span class="glyphicon glyphicon-user pull-left" aria-hidden="true"></span> Login</button>
+                </div>
+            </div>
+            
+            <div class="container cont" id="Register">
+                <form action="#">
+                    <label>Username:</label>
+                    <input required class="form-control" type="text" name="username" id="form_username" onblur="checkUsername(this)" placeholder="Username"/>
+
+                    <label>Password:</label>
+                    <input required class="form-control" type="password" name="password" id="form_password" onblur="checkPassword(this)" placeholder="Password"/>
+
+                    <label>Frist Name:</label>
+                    <input required class="form-control" type="text" name="firstname" id="form_first" onblur="checkFirst(this)" placeholder="First Name"/>
+
+                    <label>Last Name:</label>
+                    <input required class="form-control" type="text" name="lastname" id="form_last" onblur="checkLast(this)" placeholder="Last Name"/>
+
+                    <label>Email:</label>
+                    <input required class="form-control" type="email" name="email" id="form_email" onblur="checkMail(this)" placeholder="bla@bla.com"/>
+
+                    <label>Birthday</label>
+                    
+                    <div class="flex">
+                                <!-- Days -->
+                                <select class="dateForm" id="formDays">
+                                </select>
+
+                                <select class="dateForm" id="formMonth">
+                                </select>
+
+                                <select class="dateForm" id="formYears">
+                                </select>
+                    </div>
+                    <input type="button" class="btn btn-info" value="Submit" onclick="submitForm()">
+                </form>
+            </div>
+            
+            <div class="container cont" id="Login">
+                Login
+            </div>
+            
+            <div class="container cont" id="About">
+                About
+            </div>
+            
+            <div class="container cont" id="Game">
+                SCORE:
+                <input id="lblScore" type="text" />
+                TIME:
+                <input id="lblTime" type="text" />
+                <canvas id="canvas" height="600" width="600"></canvas>
+
+            </div>
+        </div>
+
+        <footer class="footer">
+            <div class="container">
+                <p class="pull-left">Pacman 2018 &copy; All rights reserved</p>
+                <p class="pull-right"> <span class="glyphicon glyphicon-envelope" aria-hidden="true"></span> Nadavgri@post.bgu.ac.il | Zaksg@post.bgu.ac.il</p>
+            </div>
+        </footer>
+        
+        <script src="https://code.jquery.com/jquery.min.js"></script>
+        <script src="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>
+        <script src="https://code.jquery.com/jquery-3.1.0.js"></script>
+		<script src="script.js"></script>
+    </body>
+
+</html>

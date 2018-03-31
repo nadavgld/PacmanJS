@@ -1,0 +1,129 @@
+/* General */
+
+:root{
+    --blue: #1c18ee;
+    --red: #ee1818;
+    --green: #18ee46;
+    --yellow: #d9ee18;
+}
+
+.not-active {
+    pointer-events: none;
+    cursor: default;
+    text-decoration:none;
+    color:black;
+}
+
+/* NavBar */
+#menuLogo{
+    height: 16px;
+    width: 16px;
+    margin-right: 5px;
+}
+
+.navbar{
+    border-radius: 0px;
+}
+
+.navbar-brand{
+    display: flex;
+    padding-top: 15px
+}
+
+.red,.blue,.yellow,.green{
+    border-bottom:2px solid transparent;
+}
+
+.red:hover{
+    border-bottom:2px solid var(--red);
+}
+
+.green:hover{
+    border-bottom:2px solid var(--green);
+}
+
+.blue:hover{
+    border-bottom:2px solid var(--blue);
+}
+
+.yellow:hover{
+    border-bottom:2px solid var(--yellow);
+}
+
+/* Footer */
+.footer{
+    background: #222;
+    color: white;
+    text-align: center;
+    bottom: 0;
+    position: fixed;
+    width: 100%;
+    padding-top: 5px;
+}
+
+/* Containers */
+.cont{
+    display:none;
+}
+
+#welcomeContent{
+    text-align: center;
+    height: 80vh;
+    top: 0;
+    border: 0;
+    padding-top: 35vh;
+    display: block;
+}
+
+#welcomeContent>button{
+    width: 20vw;
+    height: 10vh;
+}
+
+/* Form */
+form{
+    width: 40vw;
+    margin: auto;
+}
+
+form>.btn,form>label{
+    margin-top:10px;
+}
+
+.form-control{
+    width: 40vw;
+}
+
+form>.btn{
+    width: 40vw;
+}
+
+.formOK{
+    background: #00cc00;
+}
+
+.formErr{
+    background: #ff3300;
+}
+
+.flex{
+    width: 100%;
+}
+
+.dateForm{
+    width: 10vw;
+    height: 34px;
+    padding: 6px 12px;
+    font-size: 14px;
+    line-height: 1.42857143;
+    color: #555;
+    background-color: #fff;
+    background-image: none;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+    -webkit-transition: border-color ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;
+    -o-transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+    transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+}
