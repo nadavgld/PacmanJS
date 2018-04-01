@@ -7,6 +7,40 @@ var pac_color;
 var start_time;
 var time_elapsed;    
 var interval;
+var lastKeyPressed = 4;
+var prevKey = lastKeyPressed;
+
+var pacmanDirection = {
+    '1': {
+        'arc': 42.5,
+        'x': 10,
+        'y': 15
+    },
+    '2': {
+        'arc': -42.5,
+        'x': 10,
+        'y': -10
+    },
+    '3': {
+        'arc': 84.8,
+        'x': 10,
+        'y': -12
+    },
+    '4': {
+        'arc': 0,
+        'x': 5,
+        'y': -15
+    }
+};
+
+var _ingameUser = {
+    'username': 'a',
+    'password': 'a',
+    'first': 'ab',
+    'last': 'bc',
+    'email': 'ab@cd.ef',
+    'date': '12.12.1999'
+};
 
 var Welcome = $("#Welcome");
 var Register = $("#Register");
@@ -36,6 +70,7 @@ var _formValidation;
 Start();
 
 function Start() {
+    // showContainer("Game");
     showContainer("Welcome");
 }
 
@@ -74,6 +109,8 @@ function showContainer(container){
         $(".ui-dialog-buttonset>button").addClass("btn");
         $(".ui-dialog-buttonset>button").addClass("btn-danger");
         $(".ui-dialog-buttonset>button").text("Close");
+    }else if(container == "Game"){
+        initBoard();
     }
     
 }
@@ -157,7 +194,7 @@ function checkUsername(form){
     }
 }
 
-function usernameFound(user){
+function usernameFound(username){
     let filteredUser = users.filter(function(user){
         return user.username == username;
     });
@@ -270,16 +307,20 @@ function submitLogin(){
     }else{
         alert('Login Successfully!');
         clearForm('logForm');
+
+        _ingameUser = filteredUser[0];
         showContainer('Game');
-        initBoard();    
     }
 }
 
 //Game
 function initBoard(){
+    $("#lblUser").text(_ingameUser.username);    
+    clearInterval(interval);
+
     board = new Array();
     score = 0;
-    pac_color="yellow";
+    pac_color = "yellow";
     var cnt = 100;
     var food_remain = 50;
     var pacman_remain = 1;
@@ -288,23 +329,21 @@ function initBoard(){
         board[i] = new Array();
         //put obstacles in (i=3,j=3) and (i=3,j=4) and (i=3,j=5), (i=6,j=1) and (i=6,j=2)
         for (var j = 0; j < 10; j++) {
-            if((i==3 && j==3)||(i==3 && j==4)||(i==3 && j==5)||(i==6 && j==1)||(i==6 && j==2))
-            {
+            if((i==3 && j==3)||(i==3 && j==4)||(i==3 && j==5)||(i==6 && j==1)||(i==6 && j==2)){
                 board[i][j] = 4;
-            }
-            else{
-            var randomNum = Math.random();
-            if (randomNum <= 1.0 * food_remain / cnt) {
-                food_remain--;
-                board[i][j] = 1;
-            } else if (randomNum < 1.0 * (pacman_remain + food_remain) / cnt) {
-                shape.i=i;
-                shape.j=j;
-                pacman_remain--;
-                board[i][j] = 2;
-            } else {
-                board[i][j] = 0;
-            }
+            }else{
+                var randomNum = Math.random();
+                if (randomNum <= 1.0 * food_remain / cnt) {
+                    food_remain--;
+                    board[i][j] = 1;
+                }else if (randomNum < 1.0 * (pacman_remain + food_remain) / cnt) {
+                    shape.i = i;
+                    shape.j = j;
+                    pacman_remain--;
+                    board[i][j] = 2;
+                } else {
+                    board[i][j] = 0;
+                }
             cnt--;
             }
         }
@@ -323,7 +362,7 @@ function initBoard(){
         keysDown[e.keyCode] = false;
     }, false);
 
-    interval=setInterval(UpdatePosition, 100);
+    interval = setInterval(UpdatePosition, 100);
 }
 
 function findRandomEmptyCell(board){
@@ -340,47 +379,56 @@ function findRandomEmptyCell(board){
 }
 
 function GetKeyPressed() {
-    if (keysDown[38]) {
+    //UP
+    if (keysDown[38])
         return 1;
-    }
-    if (keysDown[40]) { 
+    
+    //DOWN
+    if (keysDown[40])  
         return 2;
-    }
-    if (keysDown[37]) { 
+    
+    //LEFT
+    if (keysDown[37]) 
         return 3;
-    }
-    if (keysDown[39]) { 
+    
+    //RIGHT
+    if (keysDown[39]) 
         return 4;
-    }
 }
 
 function Draw() {
     canvas.width = canvas.width; //clean board
 
     lblScore.value = score;
-    lblTime.value = time_elapsed;
+    lblTime.value = time_elapsed.toFixed(2);
+
+    if(lastKeyPressed === undefined)
+        lastKeyPressed = prevKey;
 
     for (var i = 0; i < 10; i++) {
         for (var j = 0; j < 10; j++) {
             var center = new Object();
             center.x = i * 60 + 30;
             center.y = j * 60 + 30;
+            //PACMAN
             if (board[i][j] == 2) {
                 context.beginPath();
-                context.arc(center.x, center.y, 30, 0.15 * Math.PI, 1.85 * Math.PI); // half circle
+                context.arc(center.x, center.y, 30, 0.15 * Math.PI + pacmanDirection[lastKeyPressed].arc, 1.85 * Math.PI + pacmanDirection[lastKeyPressed].arc); // half circle
                 context.lineTo(center.x, center.y);
                 context.fillStyle = pac_color; //color 
                 context.fill();
                 context.beginPath();
-                context.arc(center.x + 5, center.y - 15, 5, 0, 2 * Math.PI); // circle
+                context.arc(center.x + pacmanDirection[lastKeyPressed].x, center.y + pacmanDirection[lastKeyPressed].y, 5, 0, 2 * Math.PI); // circle
                 context.fillStyle = "black"; //color 
                 context.fill();
+            //FOOD
             } else if (board[i][j] == 1) {
                 context.beginPath();
                 context.arc(center.x, center.y, 15, 0, 2 * Math.PI); // circle
                 context.fillStyle = "black"; //color 
                 context.fill();
             }
+            //WALLS
             else if (board[i][j] == 4) {
                 context.beginPath();
                 context.rect(center.x-30, center.y-30, 60, 60);
@@ -393,53 +441,53 @@ function Draw() {
 
 function UpdatePosition() {
     board[shape.i][shape.j]=0;
-    var x = GetKeyPressed()
-    if(x==1)
-    {
-        if(shape.j>0 && board[shape.i][shape.j-1]!=4)
-        {
+    prevKey = lastKeyPressed || prevKey;
+    lastKeyPressed = GetKeyPressed();
+
+    if(lastKeyPressed==1){
+        if(shape.j>0 && board[shape.i][shape.j-1]!=4){
             shape.j--;
         }
     }
-    if(x==2)
-    {
-        if(shape.j<9 && board[shape.i][shape.j+1]!=4)
-        {
+
+    if(lastKeyPressed==2){
+        if(shape.j<9 && board[shape.i][shape.j+1]!=4){
             shape.j++;
         }
     }
-    if(x==3)
-    {
-        if(shape.i>0 && board[shape.i-1][shape.j]!=4)
-        {
+
+    if(lastKeyPressed==3){
+        if(shape.i>0 && board[shape.i-1][shape.j]!=4){
             shape.i--;
         }
     }
-    if(x==4)
-    {
-        if(shape.i<9 && board[shape.i+1][shape.j]!=4)
-        {
+
+    if(lastKeyPressed==4){
+        if(shape.i<9 && board[shape.i+1][shape.j]!=4){
             shape.i++;
         }
     }
-    if(board[shape.i][shape.j]==1)
-    {
+
+    if(board[shape.i][shape.j]==1){
         score++;
     }
+    
     board[shape.i][shape.j]=2;
     var currentTime=new Date();
     time_elapsed=(currentTime-start_time)/1000;
-    if(score>=20&&time_elapsed<=10)
-    {
+    if(score>=20&&time_elapsed<=10){
         pac_color="green";
     }
-    if(score==50)
-    {
-        window.clearInterval(interval);
-        window.alert("Game completed");
-    }
-    else
-    {
+
+    if(score==50){
+        Draw();
+
+        setTimeout(() => {
+            window.clearInterval(interval);
+            window.alert("Game completed");        
+        }, 50);
+
+    }else{
         Draw();
     }
 }

@@ -131,3 +131,30 @@ form>.btn{
 #loginMsg{
     display: none;
 }
+
+/* Game */
+#lblScore{
+    border: 0;
+    font-size: 65px;
+    width: 85px;
+    color: #ef1616;
+    font-family: Electrolize;
+    text-align: center;
+    float: right;
+    text-shadow: 2px 2px black, 0 0 10px #555;
+}
+
+#lblTime{
+    border: 0;
+    font-size: 30px;
+    width: 150px;
+    color: #9a9a9a;
+    font-family: Electrolize;
+    text-align: center;
+    padding-top: 25px;
+}
+
+#canvas{
+    float: right;
+    margin-right: 20px;
+}
