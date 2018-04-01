@@ -2,6 +2,7 @@ var context = canvas.getContext("2d");
 var shape = new Object();
 
 var board;
+var _boardSize = 10;
 var score;
 var pac_color;
 var start_time;
@@ -70,8 +71,8 @@ var _formValidation;
 Start();
 
 function Start() {
-    // showContainer("Game");
-    showContainer("Welcome");
+    showContainer("Game");
+    // showContainer("Welcome");
 }
 
 // Containers and listeners
@@ -110,7 +111,9 @@ function showContainer(container){
         $(".ui-dialog-buttonset>button").addClass("btn-danger");
         $(".ui-dialog-buttonset>button").text("Close");
     }else if(container == "Game"){
-        initBoard();
+        $(document).ready(()=>{
+            initBoard();
+        });
     }
     
 }
@@ -325,12 +328,20 @@ function initBoard(){
     var food_remain = 50;
     var pacman_remain = 1;
     start_time= new Date();
-    for (var i = 0; i < 10; i++) {
+    for (var i = 0; i < _boardSize; i++) {
         board[i] = new Array();
         //put obstacles in (i=3,j=3) and (i=3,j=4) and (i=3,j=5), (i=6,j=1) and (i=6,j=2)
-        for (var j = 0; j < 10; j++) {
+        for (var j = 0; j < _boardSize; j++) {
             if((i==3 && j==3)||(i==3 && j==4)||(i==3 && j==5)||(i==6 && j==1)||(i==6 && j==2)){
                 board[i][j] = 4;
+            }else if((i == 0 && j == 0)){
+                board[i][j] = 5;
+            }else if((i == (_boardSize - 1) && j == (_boardSize - 1))){
+                board[i][j] = 6;
+            }else if((i == (_boardSize - 1) && j == 0)){
+                board[i][j] = 7;
+            }else if(i == 0 && j == (_boardSize - 1)){
+                board[i][j] = 8;                    
             }else{
                 var randomNum = Math.random();
                 if (randomNum <= 1.0 * food_remain / cnt) {
@@ -362,17 +373,21 @@ function initBoard(){
         keysDown[e.keyCode] = false;
     }, false);
 
-    interval = setInterval(UpdatePosition, 100);
+    interval = setInterval(UpdatePosition, 150);
+}
+
+function isCorner(_i,_j){
+    return ;
 }
 
 function findRandomEmptyCell(board){
-    var i = Math.floor((Math.random() * 9) + 1);
-    var j = Math.floor((Math.random() * 9) + 1);
+    var i = Math.floor((Math.random() * (_boardSize -1)) + 1);
+    var j = Math.floor((Math.random() * (_boardSize -1)) + 1);
 
-    while(board[i][j]!=0)
+    while(board[i][j] != 0)
     {
-        i = Math.floor((Math.random() * 9) + 1);
-        j = Math.floor((Math.random() * 9) + 1);
+        i = Math.floor((Math.random() * (_boardSize -1)) + 1);
+        j = Math.floor((Math.random() * (_boardSize -1)) + 1);
     }
 
     return [i,j];             
@@ -405,24 +420,36 @@ function Draw() {
     if(lastKeyPressed === undefined)
         lastKeyPressed = prevKey;
 
-    for (var i = 0; i < 10; i++) {
-        for (var j = 0; j < 10; j++) {
+    for (var i = 0; i < _boardSize; i++) {
+        for (var j = 0; j < _boardSize; j++) {
             var center = new Object();
             center.x = i * 60 + 30;
             center.y = j * 60 + 30;
             //PACMAN
             if (board[i][j] == 2) {
                 context.beginPath();
-                context.arc(center.x, center.y, 30, 0.15 * Math.PI + pacmanDirection[lastKeyPressed].arc, 1.85 * Math.PI + pacmanDirection[lastKeyPressed].arc); // half circle
+                context.arc(center.x, center.y, 25, 0.15 * Math.PI + pacmanDirection[lastKeyPressed].arc, 1.85 * Math.PI + pacmanDirection[lastKeyPressed].arc); // half circle
                 context.lineTo(center.x, center.y);
                 context.fillStyle = pac_color; //color 
                 context.fill();
+                //EYE
                 context.beginPath();
                 context.arc(center.x + pacmanDirection[lastKeyPressed].x, center.y + pacmanDirection[lastKeyPressed].y, 5, 0, 2 * Math.PI); // circle
                 context.fillStyle = "black"; //color 
                 context.fill();
+            //GHOSTS
+            }else if(board[i][j] >= 5){
+                var num = board[i][j];
+
+                let img = new Image();
+                img.src = `imgs/ghost${num-4}.png`;
+                var x = center.x;
+                var y = center.y;
+
+                drawImage(img,x - 15,y - 15, 32,32);
+
             //FOOD
-            } else if (board[i][j] == 1) {
+            }else if (board[i][j] == 1) {
                 context.beginPath();
                 context.arc(center.x, center.y, 15, 0, 2 * Math.PI); // circle
                 context.fillStyle = "black"; //color 
@@ -439,10 +466,27 @@ function Draw() {
     }
 }
 
+function drawImage(img,x,y,h,w){
+    console.log(x + " " + y);
+    
+    if(!img.complete){
+        setTimeout(()=>{
+            drawImage(img,x,y,h,w);
+        }, 5);
+        return;
+    }
+    context.drawImage(img, x,y,h,w);
+}
+
 function UpdatePosition() {
-    board[shape.i][shape.j]=0;
+    if(board == undefined && shape == undefined)
+        return;
+
+    board[shape.i][shape.j] = 0;
+
     prevKey = lastKeyPressed || prevKey;
     lastKeyPressed = GetKeyPressed();
+    moveGhosts();
 
     if(lastKeyPressed==1){
         if(shape.j>0 && board[shape.i][shape.j-1]!=4){
@@ -490,4 +534,8 @@ function UpdatePosition() {
     }else{
         Draw();
     }
+}
+
+function moveGhosts(){
+    
 }
