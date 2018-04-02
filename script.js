@@ -1,15 +1,26 @@
 var context = canvas.getContext("2d");
 var shape = new Object();
 
+//DATA SETS
+var ghosts = {};
 var board;
-var _boardSize = 10;
-var score;
-var pac_color;
-var start_time;
+
+//INTERVAL
 var time_elapsed;    
 var interval;
+
+// GAME SETTING
+var hasTeleported = false;
+var start_time;
+var pac_color;
+var score;
+const foodColor = "#ffeb59";
+const STANDARTSIZE = 10;
+var ghostDifficulty = 0.5;
+var _boardSize = 15;
 var lastKeyPressed = 4;
 var prevKey = lastKeyPressed;
+var teleports = [];
 
 var pacmanDirection = {
     '1': {
@@ -71,8 +82,8 @@ var _formValidation;
 Start();
 
 function Start() {
-    showContainer("Game");
-    // showContainer("Welcome");
+    // showContainer("Game");
+    showContainer("Welcome");
 }
 
 // Containers and listeners
@@ -327,21 +338,25 @@ function initBoard(){
     var cnt = 100;
     var food_remain = 50;
     var pacman_remain = 1;
-    start_time= new Date();
+    start_time = new Date();
     for (var i = 0; i < _boardSize; i++) {
         board[i] = new Array();
         //put obstacles in (i=3,j=3) and (i=3,j=4) and (i=3,j=5), (i=6,j=1) and (i=6,j=2)
         for (var j = 0; j < _boardSize; j++) {
-            if((i==3 && j==3)||(i==3 && j==4)||(i==3 && j==5)||(i==6 && j==1)||(i==6 && j==2)){
+            if((i==3 && j==3)||(i==3 && j==4)||(i==3 && j==5)||(i==6 && j==1)||(i==6 && j==2)){ //Walls
                 board[i][j] = 4;
-            }else if((i == 0 && j == 0)){
+            }else if((i == 0 && j == 0)){ //Corners
                 board[i][j] = 5;
-            }else if((i == (_boardSize - 1) && j == (_boardSize - 1))){
+                ghosts[5] = {i:i,j:j,prev:0,prev_i:i,prev_j:j};
+            }else if((i == (_boardSize - 1) && j == (_boardSize - 1))){ //Corners
                 board[i][j] = 6;
-            }else if((i == (_boardSize - 1) && j == 0)){
+                ghosts[6] = {i:i,j:j,prev:0,prev_i:i,prev_j:j};
+            }else if((i == (_boardSize - 1) && j == 0)){ //Corners
                 board[i][j] = 7;
-            }else if(i == 0 && j == (_boardSize - 1)){
+                ghosts[7] = {i:i,j:j,prev:0,prev_i:i,prev_j:j};
+            }else if(i == 0 && j == (_boardSize - 1)){ //Corners
                 board[i][j] = 8;                    
+                ghosts[8] = {i:i,j:j,prev:0,prev_i:i,prev_j:j};            
             }else{
                 var randomNum = Math.random();
                 if (randomNum <= 1.0 * food_remain / cnt) {
@@ -359,11 +374,16 @@ function initBoard(){
             }
         }
     }
+
     while(food_remain>0){
         var emptyCell = findRandomEmptyCell(board);
         board[emptyCell[0]][emptyCell[1]] = 1;
         food_remain--;
     }
+
+    //Teleports
+    setTeleports();
+    
     keysDown = {};
 
     addEventListener("keydown", function (e) {
@@ -374,10 +394,6 @@ function initBoard(){
     }, false);
 
     interval = setInterval(UpdatePosition, 150);
-}
-
-function isCorner(_i,_j){
-    return ;
 }
 
 function findRandomEmptyCell(board){
@@ -391,6 +407,22 @@ function findRandomEmptyCell(board){
     }
 
     return [i,j];             
+}
+
+function setTeleports(){
+    var emptyCell = findRandomEmptyCell(board);
+    board[emptyCell[0]][emptyCell[1]] = 9;
+    teleports[9] = {
+        i:emptyCell[0],
+        j:emptyCell[1]
+    };
+
+    emptyCell = findRandomEmptyCell(board);
+    board[emptyCell[0]][emptyCell[1]] = 10;
+    teleports[10] = {
+        i:emptyCell[0],
+        j:emptyCell[1]
+    };
 }
 
 function GetKeyPressed() {
@@ -423,22 +455,33 @@ function Draw() {
     for (var i = 0; i < _boardSize; i++) {
         for (var j = 0; j < _boardSize; j++) {
             var center = new Object();
-            center.x = i * 60 + 30;
-            center.y = j * 60 + 30;
+            center.x = i * 60 * STANDARTSIZE / _boardSize + 30 * STANDARTSIZE / _boardSize;
+            center.y = j * 60 * STANDARTSIZE / _boardSize + 30 * STANDARTSIZE / _boardSize;
             //PACMAN
             if (board[i][j] == 2) {
                 context.beginPath();
-                context.arc(center.x, center.y, 25, 0.15 * Math.PI + pacmanDirection[lastKeyPressed].arc, 1.85 * Math.PI + pacmanDirection[lastKeyPressed].arc); // half circle
+                context.arc(center.x, center.y, 25 * STANDARTSIZE / _boardSize, 0.15 * Math.PI + pacmanDirection[lastKeyPressed].arc, 1.85 * Math.PI + pacmanDirection[lastKeyPressed].arc); // half circle
                 context.lineTo(center.x, center.y);
                 context.fillStyle = pac_color; //color 
                 context.fill();
                 //EYE
                 context.beginPath();
-                context.arc(center.x + pacmanDirection[lastKeyPressed].x, center.y + pacmanDirection[lastKeyPressed].y, 5, 0, 2 * Math.PI); // circle
+                context.arc(center.x + pacmanDirection[lastKeyPressed].x * STANDARTSIZE / _boardSize, center.y + pacmanDirection[lastKeyPressed].y * STANDARTSIZE / _boardSize, 5 * STANDARTSIZE / _boardSize, 0, 2 * Math.PI); // circle
                 context.fillStyle = "black"; //color 
                 context.fill();
+            //TELEPORTS
+            }else if(board[i][j] == 9 || board[i][j] == 10){
+                var num = board[i][j];
+
+                let img = new Image();
+                img.src = `imgs/whirl${num}.png`;
+                var x = center.x;
+                var y = center.y;
+
+                drawImage(img,x - 15* STANDARTSIZE / _boardSize,y - 15* STANDARTSIZE / _boardSize, 32 * STANDARTSIZE / _boardSize,32 * STANDARTSIZE / _boardSize);
+            
             //GHOSTS
-            }else if(board[i][j] >= 5){
+            }else if(board[i][j] >= 5 && board[i][j] <= 8){
                 var num = board[i][j];
 
                 let img = new Image();
@@ -446,19 +489,20 @@ function Draw() {
                 var x = center.x;
                 var y = center.y;
 
-                drawImage(img,x - 15,y - 15, 32,32);
+                drawImage(img,x - 15* STANDARTSIZE / _boardSize,y - 15* STANDARTSIZE / _boardSize, 32 * STANDARTSIZE / _boardSize,32 * STANDARTSIZE / _boardSize);
 
             //FOOD
             }else if (board[i][j] == 1) {
                 context.beginPath();
-                context.arc(center.x, center.y, 15, 0, 2 * Math.PI); // circle
-                context.fillStyle = "black"; //color 
+                // context.arc(center.x, center.y, 15, 0, 2 * Math.PI); // circle
+                context.arc(center.x, center.y, 5 * STANDARTSIZE / _boardSize, 0, 2 * Math.PI); // circle
+                context.fillStyle = foodColor; //color 
                 context.fill();
             }
             //WALLS
             else if (board[i][j] == 4) {
                 context.beginPath();
-                context.rect(center.x-30, center.y-30, 60, 60);
+                context.rect(center.x - 30 * STANDARTSIZE / _boardSize, center.y - 30 * STANDARTSIZE / _boardSize, 60 * STANDARTSIZE / _boardSize, 60 * STANDARTSIZE / _boardSize);
                 context.fillStyle = "grey"; //color 
                 context.fill();
             }
@@ -467,8 +511,6 @@ function Draw() {
 }
 
 function drawImage(img,x,y,h,w){
-    console.log(x + " " + y);
-    
     if(!img.complete){
         setTimeout(()=>{
             drawImage(img,x,y,h,w);
@@ -479,7 +521,7 @@ function drawImage(img,x,y,h,w){
 }
 
 function UpdatePosition() {
-    if(board == undefined && shape == undefined)
+    if(board == undefined || shape == undefined || shape.i == undefined || shape.j == undefined)
         return;
 
     board[shape.i][shape.j] = 0;
@@ -488,6 +530,9 @@ function UpdatePosition() {
     lastKeyPressed = GetKeyPressed();
     moveGhosts();
 
+    if(lastKeyPressed >= 1 && lastKeyPressed <= 4)
+        hasTeleported = false;
+
     if(lastKeyPressed==1){
         if(shape.j>0 && board[shape.i][shape.j-1]!=4){
             shape.j--;
@@ -495,7 +540,7 @@ function UpdatePosition() {
     }
 
     if(lastKeyPressed==2){
-        if(shape.j<9 && board[shape.i][shape.j+1]!=4){
+        if(shape.j<(_boardSize-1) && board[shape.i][shape.j+1]!=4){
             shape.j++;
         }
     }
@@ -507,7 +552,7 @@ function UpdatePosition() {
     }
 
     if(lastKeyPressed==4){
-        if(shape.i<9 && board[shape.i+1][shape.j]!=4){
+        if(shape.i<(_boardSize-1) && board[shape.i+1][shape.j]!=4){
             shape.i++;
         }
     }
@@ -515,6 +560,21 @@ function UpdatePosition() {
     if(board[shape.i][shape.j]==1){
         score++;
     }
+
+    let teleportTo = pacmanInTeleport();
+    if(teleportTo.length > 0 && !hasTeleported){
+        shape.i = teleportTo[0];
+        shape.j = teleportTo[1];
+
+        hasTeleported = true;
+    }
+
+    $.each(teleports, (idx, tele)=>{
+        if(tele == undefined)
+            return;
+        
+        board[tele.i][tele.j] = idx;
+    });
     
     board[shape.i][shape.j]=2;
     var currentTime=new Date();
@@ -522,6 +582,19 @@ function UpdatePosition() {
     if(score>=20&&time_elapsed<=10){
         pac_color="green";
     }
+
+    $.each(ghosts,(ghostIdx, ghost)=>{
+        if(ghost.i == shape.i && ghost.j == shape.j){
+            board[ghost.i][ghost.j] = ghostIdx;
+            Draw();
+
+            setTimeout(() => {
+                window.clearInterval(interval);
+                window.alert("You Lost - Game OVER!");
+                initBoard();        
+            }, 5);
+        }
+    });
 
     if(score==50){
         Draw();
@@ -536,6 +609,139 @@ function UpdatePosition() {
     }
 }
 
-function moveGhosts(){
+function pacmanInTeleport(){
+    var found = teleports.filter((tele)=>{
+        return tele.i == shape.i && tele.j == shape.j;
+    });
+
+    if(found.length > 0){
+        var current = found[0];
+        var res;
+
+        $.each(teleports, (key,tele)=>{
+            if(tele == undefined)
+                return;
+
+            if(tele.i != current.i || tele.j != current.j)
+                res = tele;
+        });
+
+        return [res.i,res.j];
+    }
     
+    return [];
+}
+
+function moveGhosts(){
+    $.each(ghosts,(ghostIdx, ghost)=>{
+        moveAGhost(ghost, ghostIdx, 1, false);
+    });
+    // moveAGhost(ghosts[5],5,1, false);
+}
+
+function moveAGhost(ghost, ghostIdx, round, hasMoved){
+
+    if(Math.random() < ghostDifficulty)
+        return;
+
+    let rnd = Math.random();
+
+    //move right
+    if(((!hasMoved && shape.i > ghost.i) || (round != 1 && rnd <= 0.25)) && !prevPosition(ghost,"R")){
+        if(ghost.i+1 != _boardSize && freeForGhost(ghost.i + 1, ghost.j)){
+            let prev = ghost.prev;
+            ghost.prev = board[ghost.i+1][ghost.j];
+
+            board[ghost.i][ghost.j] = prev;
+            board[ghost.i+1][ghost.j] = ghostIdx;
+    
+            ghost.prev_j = ghost.j;            
+            ghost.prev_i = ghost.i;
+            ghost.i = ghost.i + 1;
+            hasMoved = true;
+            
+            return;
+        }
+    }
+
+    //move left
+    if(((!hasMoved && shape.i < ghost.i) || (round != 1 && rnd > 0.25 && rnd <= 0.5)) && !prevPosition(ghost,"L")){
+        if(ghost.i != 0 && freeForGhost(ghost.i - 1, ghost.j)){
+            let prev = ghost.prev;
+            ghost.prev = board[ghost.i-1][ghost.j];
+
+            board[ghost.i][ghost.j] = prev;
+            board[ghost.i-1][ghost.j] = ghostIdx;
+
+            ghost.prev_j = ghost.j;            
+            ghost.prev_i = ghost.i;
+            ghost.i = ghost.i - 1;
+            hasMoved = true;
+
+            return;            
+        }
+    }
+
+    //move up
+    if(((!hasMoved && shape.j < ghost.j) || (round != 1 && rnd > 0.5 && rnd <= 0.75)) && !prevPosition(ghost,"U")){
+        if(ghost.j != 0 && freeForGhost(ghost.i, ghost.j-1)){
+            let prev = ghost.prev;
+            ghost.prev = board[ghost.i][ghost.j - 1];
+
+            board[ghost.i][ghost.j] = prev;
+            board[ghost.i][ghost.j-1] = ghostIdx;
+    
+            ghost.prev_j = ghost.j;
+            ghost.prev_i = ghost.i;                                 
+            ghost.j = ghost.j - 1;
+            hasMoved = true;
+
+            return;            
+        }
+    }
+
+    //move down
+    if(((!hasMoved && shape.j > ghost.j) || (round != 1)) && !prevPosition(ghost,"D")){
+        if(ghost.j + 1 != _boardSize && freeForGhost(ghost.i, ghost.j + 1)){
+            let prev = ghost.prev;
+            ghost.prev = board[ghost.i][ghost.j + 1];
+
+            board[ghost.i][ghost.j] = prev;
+            board[ghost.i][ghost.j+1] = ghostIdx;
+    
+            ghost.prev_j = ghost.j;   
+            ghost.prev_i = ghost.i;         
+            ghost.j = ghost.j + 1;
+            hasMoved = true;
+
+            return;            
+        }
+    }
+
+    if(!hasMoved)
+        moveAGhost(ghost, ghostIdx, round+1, hasMoved);
+}
+
+function freeForGhost(i,j){
+    return (board[i][j] == 0 || board[i][j] == 1 || board[i][j] == 2);
+}
+
+function prevPosition(ghost, direction){
+    var res;
+    switch(direction){
+        case "R":
+            res = (ghost.i + 1 == ghost.prev_i);
+            break;
+        case "L":
+            res = (ghost.i - 1 == ghost.prev_i);
+            break;
+        case "D":
+            res = (ghost.j + 1 == ghost.prev_j);
+            break;
+        case "U":
+            res = (ghost.j - 1 == ghost.prev_j);
+            break;      
+    }
+
+    return res;
 }
