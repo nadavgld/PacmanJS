@@ -4,24 +4,36 @@ var shape = new Object();
 //DATA SETS
 var ghosts = {};
 var board;
+var teleports = [];
 
 //INTERVAL
 var time_elapsed;    
 var interval;
 
 // GAME SETTING
-var hasTeleported = false;
+var _boardSize = 15;
+const STANDARTSIZE = 10; //Keep canvas ratio fixed
 var start_time;
 var pac_color;
 var score;
-const foodColor = "#ffeb59";
-const STANDARTSIZE = 10;
-var ghostDifficulty = 0.5;
-var _boardSize = 15;
-var lastKeyPressed = 4;
+var health;
+var hasTeleported = false;
+const foodColor = "#ffeb59"; //Yellowish
+var ghostDifficulty = 0.5; //Higher = easier
+var lastKeyPressed = 4; //Facing right at the begining
 var prevKey = lastKeyPressed;
-var teleports = [];
 
+/* Board Values Map
+    0 - Empty
+    1 - Food
+    2 - Pacman
+    3 - Running Point
+    4 - Wall
+    5-8 - Ghosts
+    9-10 - Teleports
+*/
+
+//Pacman visualisation mapping by direction(right left up down)
 var pacmanDirection = {
     '1': {
         'arc': 42.5,
@@ -45,15 +57,7 @@ var pacmanDirection = {
     }
 };
 
-var _ingameUser = {
-    'username': 'a',
-    'password': 'a',
-    'first': 'ab',
-    'last': 'bc',
-    'email': 'ab@cd.ef',
-    'date': '12.12.1999'
-};
-
+//Containers
 var Welcome = $("#Welcome");
 var Register = $("#Register");
 var Login = $("#Login");
@@ -69,6 +73,7 @@ var users = [{
     'date': '12.12.1999'
 }];
 
+var _formValidation;
 var validateFormTemplate = {
     'username': false,
     'password': false,
@@ -77,13 +82,21 @@ var validateFormTemplate = {
     'email': false,
 };
 
-var _formValidation;
+//Hard coded in-game user
+var _ingameUser = {
+    'username': 'a',
+    'password': 'a',
+    'first': 'ab',
+    'last': 'bc',
+    'email': 'ab@cd.ef',
+    'date': '12.12.1999'
+};
 
 Start();
 
 function Start() {
-    // showContainer("Game");
-    showContainer("Welcome");
+    showContainer("Game");
+    // showContainer("Welcome");
 }
 
 // Containers and listeners
@@ -328,12 +341,22 @@ function submitLogin(){
 }
 
 //Game
+function updateHearts(){
+    let div = $("#hearts");
+    div.html('');
+
+    for (let i = 0; i < health; i++) {
+        div.append(`<span class="glyphicon glyphicon-heart" aria-hidden="true"></span>`);       
+    }
+}
+
 function initBoard(){
     $("#lblUser").text(_ingameUser.username);    
     clearInterval(interval);
 
     board = new Array();
     score = 0;
+    health = 3;
     pac_color = "yellow";
     var cnt = 100;
     var food_remain = 50;
@@ -358,19 +381,19 @@ function initBoard(){
                 board[i][j] = 8;                    
                 ghosts[8] = {i:i,j:j,prev:0,prev_i:i,prev_j:j};            
             }else{
-                var randomNum = Math.random();
-                if (randomNum <= 1.0 * food_remain / cnt) {
-                    food_remain--;
-                    board[i][j] = 1;
-                }else if (randomNum < 1.0 * (pacman_remain + food_remain) / cnt) {
-                    shape.i = i;
-                    shape.j = j;
-                    pacman_remain--;
-                    board[i][j] = 2;
-                } else {
+            //     var randomNum = Math.random();
+            //     if (randomNum <= 1.0 * food_remain / cnt) {
+            //         food_remain--;
+            //         board[i][j] = 1;
+            //     }else if (randomNum < 1.0 * (pacman_remain + food_remain) / cnt) {
+            //         shape.i = i;
+            //         shape.j = j;
+            //         pacman_remain--;
+            //         board[i][j] = 2;
+            //     } else {
                     board[i][j] = 0;
-                }
-            cnt--;
+            //     }
+            // cnt--;
             }
         }
     }
@@ -381,6 +404,15 @@ function initBoard(){
         food_remain--;
     }
 
+    var emptyCell = findRandomEmptyCell(board);
+    board[emptyCell[0]][emptyCell[1]] = 2;
+    shape.i = emptyCell[0];
+    shape.j = emptyCell[1];
+    pacman_remain--;
+
+    //Display Hearts
+    updateHearts();
+    
     //Teleports
     setTeleports();
     
@@ -528,7 +560,8 @@ function UpdatePosition() {
 
     prevKey = lastKeyPressed || prevKey;
     lastKeyPressed = GetKeyPressed();
-    moveGhosts();
+
+    // moveGhosts();
 
     if(lastKeyPressed >= 1 && lastKeyPressed <= 4)
         hasTeleported = false;
@@ -587,11 +620,21 @@ function UpdatePosition() {
         if(ghost.i == shape.i && ghost.j == shape.j){
             board[ghost.i][ghost.j] = ghostIdx;
             Draw();
-
+            
             setTimeout(() => {
                 window.clearInterval(interval);
-                window.alert("You Lost - Game OVER!");
-                initBoard();        
+                health--;
+                updateHearts();
+
+                if(health > 0){
+                    alert(`OH NO! ${health} tries left for you.`);                    
+                    decreaseHealthPoint();      
+
+                }else{                    
+                    window.alert("You Lost - Game OVER!");
+                    initBoard(); 
+                }
+
             }, 5);
         }
     });
@@ -601,12 +644,59 @@ function UpdatePosition() {
 
         setTimeout(() => {
             window.clearInterval(interval);
-            window.alert("Game completed");        
+            window.alert("Game completed");   
+            initBoard();                  
         }, 50);
 
     }else{
         Draw();
     }
+}
+
+function decreaseHealthPoint(){
+
+    $.each(ghosts, (idx, ghost)=>{
+        if(ghost == undefined)
+            return;
+
+        board[ghost.i][ghost.j] = ghost.prev;
+
+        switch(parseInt(idx)){
+            case 5:
+                board[0][0] = 5;
+                ghost.i = ghost.prev_i = 0;
+                ghost.j = ghost.prev_j = 0;
+                break;
+            case 6:
+                board[0][_boardSize-1] = 6;
+                ghost.i = ghost.prev_i = 0;
+                ghost.j = ghost.prev_j = _boardSize-1;
+                break;
+            case 7:
+                board[_boardSize - 1][0] = 7;
+                ghost.i = ghost.prev_i = _boardSize-1;
+                ghost.j = ghost.prev_j = 0;
+                break;
+            case 8:
+                board[_boardSize - 1][_boardSize - 1] = 8;
+                ghost.i = ghost.prev_i = _boardSize-1;
+                ghost.j = ghost.prev_j = _boardSize-1;
+                break;
+        }
+        ghost.prev = 0;
+    });
+
+    board[shape.i][shape.j] = 0;
+    var emptyCell = findRandomEmptyCell(board);
+    board[emptyCell[0]][emptyCell[1]] = 2;
+    shape.i = emptyCell[0];
+    shape.j = emptyCell[1];
+
+    Draw();
+    setTimeout(()=>{
+        interval = setInterval(UpdatePosition, 150);
+    }, 1500);
+
 }
 
 function pacmanInTeleport(){
@@ -745,3 +835,28 @@ function prevPosition(ghost, direction){
 
     return res;
 }
+
+/* BEST SCORE BOARD SORTING
+var x = [{
+	"name":"nadav",
+	"score":10,
+	"time":15
+},
+{
+	"name":"guy",
+	"score":12,
+	"time":20
+},
+{
+	"name":"netta",
+	"score":10,
+	"time":16
+}
+];
+
+var y = x.sort(function(a,b){
+	if(a.score < b.score) return true;
+	else if(a.score == b.score) return a.time > b.time;
+});
+
+*/
