@@ -6,6 +6,7 @@ var ghosts = {};
 var coin = {};
 var board;
 var teleports = [];
+var highscores = [];
 
 //INTERVAL
 var time_elapsed;    
@@ -23,7 +24,7 @@ const foodColor = "#ffeb59"; //Yellowish
 const foodColor15 = "#ff5e5e"; //Redish
 const foodColor25 = "#55f6fc"; //Cyan
 const wallColor = "#3c2683"; //Dark-Blue
-var ghostDifficulty = 0.2; //Higher = easier
+var ghostDifficulty = 0.5; //Higher = easier
 var _Difficulty;
 var lastKeyPressed = 4; //Facing right at the begining
 var prevKey = lastKeyPressed;
@@ -105,11 +106,13 @@ var _ingameUser = {
 
 Start();
 
+//Website Loaded
 function Start() {
-    showContainer("Game");
-    // showContainer("Welcome");
+    // showContainer("Game");
+    showContainer("Welcome");
 
     $( "#dialog-setting" ).hide();
+    $( "#dialog-scores" ).hide();
 }
 
 // Containers and listeners
@@ -130,9 +133,15 @@ function showContainer(container){
     }
 
     if(container == "Register"){
+        clearForm("regForm");
         _formValidation = newFormValidation();
         setFormDates();
+        $("#form_username").focus();
         $("#regForm>.btn").prop('disabled',true);
+    }else if(container == "Login"){
+        clearForm("logForm");        
+        $("#loginMsg").hide();
+        $("#log_username").focus();
     }else if(container == "About"){
         $( "#dialog-message" ).dialog({
             modal: true,
@@ -185,6 +194,43 @@ function showSetting(){
     $(".ui-dialog-buttonset>button").text("Save");
 }
 
+function showHighscores(){
+    let table = $( "#dialog-scores>table>tbody");
+
+    var sortedList;
+    
+    if(highscores.length <= 1)
+        sortedList = highscores;
+    else{
+        sortedList = highscores.sort(function(a,b){
+            if(a.score < b.score) return true;
+            else if(a.score == b.score) return a.time > b.time;
+        });
+    }
+
+    table.html('');
+    for (let i = 0; i < sortedList.length; i++) {
+        table.append($("<tr>").html(`<td>${sortedList[i].name}</td>
+                                    <td>${sortedList[i].score}</td>
+                                    <td>${sortedList[i].time}</td>
+        `));
+    }
+
+    $( "#dialog-scores" ).dialog({
+        modal: true,
+        buttons: {
+            Ok: function() {
+                $( this ).dialog( "close" );
+            }
+        }
+    });
+
+    $(".ui-dialog-titlebar-close").hide();
+    $(".ui-dialog-buttonset>button").addClass("btn");
+    $(".ui-dialog-buttonset>button").addClass("btn-danger");
+    $(".ui-dialog-buttonset>button").text("Close");
+}
+
 function hideAllContainers(){
     Welcome.hide();
     Game.hide();
@@ -192,6 +238,8 @@ function hideAllContainers(){
     Register.hide();
     About.hide();
 }
+
+//////////////////////////////////////////////////////////////////////////////////
 
 // Register Form validation
 function setFormDates(){
@@ -356,6 +404,8 @@ function clearForm(formID){
     });
 }
 
+//////////////////////////////////////////////////////////////////////////////////
+
 //Login Form
 function submitLogin(){
     let msg = $("#loginMsg");
@@ -383,16 +433,9 @@ function submitLogin(){
     }
 }
 
+//////////////////////////////////////////////////////////////////////////////////
+
 //Game
-function updateHearts(){
-    let div = $("#hearts");
-    div.html('');
-
-    for (let i = 0; i < health; i++) {
-        div.append(`<span class="glyphicon glyphicon-heart" aria-hidden="true"></span>`);       
-    }
-}
-
 function initBoard(){
     //Initialize
     $("#lblUser").text(_ingameUser.username);  
@@ -528,19 +571,6 @@ function initBoard(){
     Draw();
 }
 
-function findRandomEmptyCell(board){
-    var i = Math.floor((Math.random() * (_boardSize -1)) + 1);
-    var j = Math.floor((Math.random() * (_boardSize -1)) + 1);
-
-    while(board[i][j] != 0)
-    {
-        i = Math.floor((Math.random() * (_boardSize -1)) + 1);
-        j = Math.floor((Math.random() * (_boardSize -1)) + 1);
-    }
-
-    return [i,j];             
-}
-
 function startGame(){
     let btn = $("#ppBtn");
 
@@ -553,26 +583,6 @@ function startGame(){
     pausedTime = start_time;
 
     interval = setInterval(UpdatePosition, 150);
-}
-
-function isWall(i,j,mapType){
-
-    if(mapType > 0.5)
-        return (i==3 && j==3)||(i==3 && j==4)||(i==3 && j==5)||(i==6 && j==1)||(i==6 && j==2) || (i == 4 & j == 3) || (i==5 & j==3 || (i==6 && j==3)) //Top-left
-        || (i == _boardSize-4 && j == 5) || (i == _boardSize-4 && j == 4) || (i == _boardSize-4 && j == 3) || (i == _boardSize-5 && j == 3) || (i == _boardSize-6 && j == 3) || (i == _boardSize-7 && j == 3)  || (i == _boardSize-7 && j == 2)  || (i == _boardSize-7 && j == 1) //Top-Right
-        || (i == 3 && j == _boardSize -2) || (i == 3 && j == _boardSize -3) || (i == 3 && j == _boardSize -4) || (i == 4 && j == _boardSize -4) || (i == 5 && j == _boardSize -4) || (i == 6 && j == _boardSize -4) || (i == 6 && j == _boardSize -3) || (i == 6 && j == _boardSize -2) //Bottom-Left
-        || (i == _boardSize-4 && j == _boardSize -2) || (i == _boardSize-4 && j == _boardSize -3) || (i == _boardSize-4 && j == _boardSize -4) || (i == _boardSize-5 && j == _boardSize -4) || (i == _boardSize-6 && j == _boardSize -4) || (i == _boardSize-7 && j == _boardSize -4) || (i == _boardSize-7 && j == _boardSize -3) || (i == _boardSize-7 && j == _boardSize -2) //Bottom-Right
-        || (i == _boardSize/2 && j == _boardSize/2) || (i == _boardSize/2-1 && j == _boardSize/2) || (i == _boardSize/2 && j == _boardSize/2+1) || (i == _boardSize/2-1 && j == _boardSize/2+1) || (i == _boardSize/2-2 && j == _boardSize/2+1) || (i == _boardSize/2-3 && j == _boardSize/2+1) || (i == _boardSize/2+1 && j == _boardSize/2+1) || (i == _boardSize/2+2 && j == _boardSize/2+1) || (i == _boardSize/2+3 && j == _boardSize/2+1) || (i == _boardSize/2-4 && j == _boardSize/2+1)
-        || (i == 0 && j == _boardSize/2-1) || (i == 0 && j == _boardSize/2) || (i == _boardSize-1 && j == _boardSize/2-1) || (i == _boardSize-1 && j == _boardSize/2)
-        ;
-    
-    return (i == 1 && j == 1) || (i == 2 && j == 1) || (i == 3 && j == 1) || (i == 4 && j == 1) || (i == 3 && j == 2) || (i == 2 && j == 3) || (i == 1 && j == 4) || (i == 2 && j == 4) || (i == 3 && j == 4) || (i == 4 && j == 4) //Z 
-        || (i == 6 && j == 4) || (i == 6 && j == 3) || (i == 6 && j == 2) || (i == 6 && j == 1) || (i == 7 && j == 1) || (i == 8 && j == 1) || (i == 9 && j == 1) || (i == 9 && j == 2) || (i == 9 && j == 3) || (i == 9 && j == 4) //A
-        || (i == 11 && j == 1) || (i == 12 && j == 2) || (i == 13 && j == 3) || (i == 14 && j == 4) || (i == 11 && j == 4) || (i == 12 && j == 3) || (i == 13 && j == 2) || (i == 14 && j == 1) //X
-        || (i == 1 && j == 14) || (i == 1 && j == 13) || (i == 1 && j == 12) || (i == 1 && j == 11) || (i == 2 && j == 12) || (i == 3 && j == 13)  || (i == 4 && j == 14) || (i == 4 && j == 13) || (i == 4 && j == 12) || (i == 4 && j == 11) //N
-        || (i == 6 && j == 14) || (i == 6 && j == 13) || (i == 6 && j == 12) || (i == 6 && j == 11) || (i == 7 && j == 11) || (i == 9 && j == 12) || (i == 9 && j == 13) || (i == 7 && j == 14) || (i == 8 && j == 14) || (i == 8 && j == 11) //D
-        || (i == 13 && j == 14) || (i == 12 && j == 13) || (i == 11 && j == 12) || (i == 11 && j == 11) || (i == 14 && j == 13) || (i == 15 && j == 12) || (i == 15 && j == 11) //V
-        ;
 }
 
 function setTeleports(){
@@ -591,24 +601,7 @@ function setTeleports(){
     };
 }
 
-function GetKeyPressed() {
-    //UP
-    if (keysDown[38])
-        return 1;
-    
-    //DOWN
-    if (keysDown[40])  
-        return 2;
-    
-    //LEFT
-    if (keysDown[37]) 
-        return 3;
-    
-    //RIGHT
-    if (keysDown[39]) 
-        return 4;
-}
-
+//Drawing on canvs
 function Draw() {
     canvas.width = canvas.width; //clean board
 
@@ -714,6 +707,7 @@ function drawImage(img,x,y,h,w){
     context.drawImage(img, x,y,h,w);
 }
 
+//Movement
 function UpdatePosition() {
     if(board == undefined || shape == undefined || shape.i == undefined || shape.j == undefined)
         return;
@@ -800,9 +794,11 @@ function UpdatePosition() {
     if(time_elapsed >= minimumTime){
         if(score < 150){
             alert(`Time's UP! You've got ${score} points - You can do better!`);
+            addHighscore();
             initBoard(); 
         }else{
             alert(`Time's UP! You've got ${score} points - We have a winner!`);
+            addHighscore();            
             initBoard(); 
         }
     }
@@ -822,6 +818,7 @@ function UpdatePosition() {
                     decreaseHealthPoint();      
 
                 }else{                    
+                    addHighscore();                    
                     window.alert("You Lost - Game OVER!");
                     initBoard(); 
                 }
@@ -834,6 +831,7 @@ function UpdatePosition() {
         Draw();
 
         setTimeout(() => {
+            addHighscore();            
             window.clearInterval(interval);
             window.alert(`Game completed in ${time_elapsed} seconds`);   
             initBoard();                  
@@ -844,81 +842,10 @@ function UpdatePosition() {
     }
 }
 
-function decreaseHealthPoint(){
-
-    $.each(ghosts, (idx, ghost)=>{
-        if(ghost == undefined)
-            return;
-
-        board[ghost.i][ghost.j] = ghost.prev;
-
-        switch(parseInt(idx)){
-            case 5:
-                board[0][0] = 5;
-                ghost.i = ghost.prev_i = 0;
-                ghost.j = ghost.prev_j = 0;
-                break;
-            case 6:
-                board[0][_boardSize-1] = 6;
-                ghost.i = ghost.prev_i = 0;
-                ghost.j = ghost.prev_j = _boardSize-1;
-                break;
-            case 7:
-                board[_boardSize - 1][0] = 7;
-                ghost.i = ghost.prev_i = _boardSize-1;
-                ghost.j = ghost.prev_j = 0;
-                break;
-            case 8:
-                board[_boardSize - 1][_boardSize - 1] = 8;
-                ghost.i = ghost.prev_i = _boardSize-1;
-                ghost.j = ghost.prev_j = _boardSize-1;
-                break;
-        }
-        ghost.prev = 0;
-    });
-
-    board[shape.i][shape.j] = 0;
-    var emptyCell = findRandomEmptyCell(board);
-    board[emptyCell[0]][emptyCell[1]] = 2;
-    shape.i = emptyCell[0];
-    shape.j = emptyCell[1];
-
-    lastKeyPressed = 4;
-    Draw();
-    setTimeout(()=>{
-        interval = setInterval(UpdatePosition, 150);
-    }, 1500);
-
-}
-
-function pacmanInTeleport(){
-    var found = teleports.filter((tele)=>{
-        return tele.i == shape.i && tele.j == shape.j;
-    });
-
-    if(found.length > 0){
-        var current = found[0];
-        var res;
-
-        $.each(teleports, (key,tele)=>{
-            if(tele == undefined)
-                return;
-
-            if(tele.i != current.i || tele.j != current.j)
-                res = tele;
-        });
-
-        return [res.i,res.j];
-    }
-    
-    return [];
-}
-
 function moveGhosts(){
     $.each(ghosts,(ghostIdx, ghost)=>{
         moveAGhost(ghost, ghostIdx, 1, false);
     });
-    // moveAGhost(ghosts[5],5,1, false);
 }
 
 function moveAGhost(ghost, ghostIdx, round, hasMoved){
@@ -1074,6 +1001,141 @@ function moveCoin(){
     moveCoin();
 }
 
+
+//Hit by a ghost
+function decreaseHealthPoint(){
+
+    $.each(ghosts, (idx, ghost)=>{
+        if(ghost == undefined)
+            return;
+
+        board[ghost.i][ghost.j] = ghost.prev;
+
+        switch(parseInt(idx)){
+            case 5:
+                board[0][0] = 5;
+                ghost.i = ghost.prev_i = 0;
+                ghost.j = ghost.prev_j = 0;
+                break;
+            case 6:
+                board[0][_boardSize-1] = 6;
+                ghost.i = ghost.prev_i = 0;
+                ghost.j = ghost.prev_j = _boardSize-1;
+                break;
+            case 7:
+                board[_boardSize - 1][0] = 7;
+                ghost.i = ghost.prev_i = _boardSize-1;
+                ghost.j = ghost.prev_j = 0;
+                break;
+            case 8:
+                board[_boardSize - 1][_boardSize - 1] = 8;
+                ghost.i = ghost.prev_i = _boardSize-1;
+                ghost.j = ghost.prev_j = _boardSize-1;
+                break;
+        }
+        ghost.prev = 0;
+    });
+
+    board[shape.i][shape.j] = 0;
+    var emptyCell = findRandomEmptyCell(board);
+    board[emptyCell[0]][emptyCell[1]] = 2;
+    shape.i = emptyCell[0];
+    shape.j = emptyCell[1];
+
+    lastKeyPressed = 4;
+    Draw();
+    setTimeout(()=>{
+        interval = setInterval(UpdatePosition, 150);
+    }, 1500);
+
+}
+
+function updateHearts(){
+    let div = $("#hearts");
+    div.html('');
+
+    for (let i = 0; i < health; i++) {
+        div.append(`<span class="glyphicon glyphicon-heart" aria-hidden="true"></span>`);       
+    }
+}
+
+//Game Help-Functions
+//Listener
+function GetKeyPressed() {
+    //UP
+    if (keysDown[38])
+        return 1;
+    
+    //DOWN
+    if (keysDown[40])  
+        return 2;
+    
+    //LEFT
+    if (keysDown[37]) 
+        return 3;
+    
+    //RIGHT
+    if (keysDown[39]) 
+        return 4;
+}
+
+//Positioning
+function findRandomEmptyCell(board){
+    var i = Math.floor((Math.random() * (_boardSize -1)) + 1);
+    var j = Math.floor((Math.random() * (_boardSize -1)) + 1);
+
+    while(board[i][j] != 0)
+    {
+        i = Math.floor((Math.random() * (_boardSize -1)) + 1);
+        j = Math.floor((Math.random() * (_boardSize -1)) + 1);
+    }
+
+    return [i,j];             
+}
+
+function isWall(i,j,mapType){
+
+    if(mapType > 0.5)
+        return (i==3 && j==3)||(i==3 && j==4)||(i==3 && j==5)||(i==6 && j==1)||(i==6 && j==2) || (i == 4 & j == 3) || (i==5 & j==3 || (i==6 && j==3)) //Top-left
+        || (i == _boardSize-4 && j == 5) || (i == _boardSize-4 && j == 4) || (i == _boardSize-4 && j == 3) || (i == _boardSize-5 && j == 3) || (i == _boardSize-6 && j == 3) || (i == _boardSize-7 && j == 3)  || (i == _boardSize-7 && j == 2)  || (i == _boardSize-7 && j == 1) //Top-Right
+        || (i == 3 && j == _boardSize -2) || (i == 3 && j == _boardSize -3) || (i == 3 && j == _boardSize -4) || (i == 4 && j == _boardSize -4) || (i == 5 && j == _boardSize -4) || (i == 6 && j == _boardSize -4) || (i == 6 && j == _boardSize -3) || (i == 6 && j == _boardSize -2) //Bottom-Left
+        || (i == _boardSize-4 && j == _boardSize -2) || (i == _boardSize-4 && j == _boardSize -3) || (i == _boardSize-4 && j == _boardSize -4) || (i == _boardSize-5 && j == _boardSize -4) || (i == _boardSize-6 && j == _boardSize -4) || (i == _boardSize-7 && j == _boardSize -4) || (i == _boardSize-7 && j == _boardSize -3) || (i == _boardSize-7 && j == _boardSize -2) //Bottom-Right
+        || (i == _boardSize/2 && j == _boardSize/2) || (i == _boardSize/2-1 && j == _boardSize/2) || (i == _boardSize/2 && j == _boardSize/2+1) || (i == _boardSize/2-1 && j == _boardSize/2+1) || (i == _boardSize/2-2 && j == _boardSize/2+1) || (i == _boardSize/2-3 && j == _boardSize/2+1) || (i == _boardSize/2+1 && j == _boardSize/2+1) || (i == _boardSize/2+2 && j == _boardSize/2+1) || (i == _boardSize/2+3 && j == _boardSize/2+1) || (i == _boardSize/2-4 && j == _boardSize/2+1)
+        || (i == 0 && j == _boardSize/2-1) || (i == 0 && j == _boardSize/2) || (i == _boardSize-1 && j == _boardSize/2-1) || (i == _boardSize-1 && j == _boardSize/2)
+        ;
+    
+    return (i == 1 && j == 1) || (i == 2 && j == 1) || (i == 3 && j == 1) || (i == 4 && j == 1) || (i == 3 && j == 2) || (i == 2 && j == 3) || (i == 1 && j == 4) || (i == 2 && j == 4) || (i == 3 && j == 4) || (i == 4 && j == 4) //Z 
+        || (i == 6 && j == 4) || (i == 6 && j == 3) || (i == 6 && j == 2) || (i == 6 && j == 1) || (i == 7 && j == 1) || (i == 8 && j == 1) || (i == 9 && j == 1) || (i == 9 && j == 2) || (i == 9 && j == 3) || (i == 9 && j == 4) //A
+        || (i == 11 && j == 1) || (i == 12 && j == 2) || (i == 13 && j == 3) || (i == 14 && j == 4) || (i == 11 && j == 4) || (i == 12 && j == 3) || (i == 13 && j == 2) || (i == 14 && j == 1) //X
+        || (i == 1 && j == 14) || (i == 1 && j == 13) || (i == 1 && j == 12) || (i == 1 && j == 11) || (i == 2 && j == 12) || (i == 3 && j == 13)  || (i == 4 && j == 14) || (i == 4 && j == 13) || (i == 4 && j == 12) || (i == 4 && j == 11) //N
+        || (i == 6 && j == 14) || (i == 6 && j == 13) || (i == 6 && j == 12) || (i == 6 && j == 11) || (i == 7 && j == 11) || (i == 9 && j == 12) || (i == 9 && j == 13) || (i == 7 && j == 14) || (i == 8 && j == 14) || (i == 8 && j == 11) //D
+        || (i == 13 && j == 14) || (i == 12 && j == 13) || (i == 11 && j == 12) || (i == 11 && j == 11) || (i == 14 && j == 13) || (i == 15 && j == 12) || (i == 15 && j == 11) //V
+        ;
+}
+
+function pacmanInTeleport(){
+    var found = teleports.filter((tele)=>{
+        return tele.i == shape.i && tele.j == shape.j;
+    });
+
+    if(found.length > 0){
+        var current = found[0];
+        var res;
+
+        $.each(teleports, (key,tele)=>{
+            if(tele == undefined)
+                return;
+
+            if(tele.i != current.i || tele.j != current.j)
+                res = tele;
+        });
+
+        return [res.i,res.j];
+    }
+    
+    return [];
+}
+
 function freeForGhost(i,j){
     return (board[i][j] == 0 || board[i][j] == 1 || board[i][j] == 2 || board[i][j] == 1.1 || board[i][j] == 1.2 || board[i][j] == 3 || board[i][j] == 11);
 }
@@ -1102,7 +1164,16 @@ function prevPosition(ghost, direction){
     return res;
 }
 
-/* BEST SCORE BOARD SORTING
+//HighScores
+function addHighscore(){
+    highscores.push({
+        "name": _ingameUser.username,
+        "score": score,
+        "time": time_elapsed
+    });
+}
+
+/* BEST SCORE BOARD SORTING 
 var x = [{
 	"name":"nadav",
 	"score":10,
