@@ -90,7 +90,7 @@ form>.btn,form>label{
     margin-top:10px;
 }
 
-.form-control{
+form>.form-control{
     width: 40vw;
 }
 
@@ -104,6 +104,11 @@ form>.btn{
 
 .formErr{
     background: #ff3300;
+}
+
+#dialog-setting>div>.form-control{
+    width: 25%;
+    display: -webkit-inline-box;
 }
 
 .flex{
@@ -136,7 +141,7 @@ form>.btn{
 #lblScore{
     border: 0;
     font-size: 65px;
-    width: 100px;
+    width: 140px;
     color: #ef1616;
     font-family: Electrolize;
     text-align: center;
@@ -159,4 +164,22 @@ form>.btn{
     margin-right: 20px;
     border: 3px solid #8c8c8c;
     background: #281564;
+}
+
+#ppBtn, #settingBtn{
+    margin-top: 15px;
+    width: 150px;
+}
+
+#dialog-setting>.flex{
+    padding-top: 40px;
+}
+
+.pnt{
+    font-size: 24px;
+}
+
+.pnt>img{
+    height: 16px;
+    width: 16px;
 }

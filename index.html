@@ -120,12 +120,29 @@
             
             <div class="container cont" id="Game">
                 <div class="flex">
-                    Player Name: <span id="lblUser"></span>
+                    <b> Player Name: </b> <span id="lblUser"></span>
                     <input id="lblScore" type="text" />
                     <input id="lblTime" class='pull-right' type="text" />
                 </div>
                 <canvas id="canvas" height="600" width="600"></canvas>
+
                 <div class="flex" id="hearts"></div>
+                <br>
+                <div class="flex">
+                    <button class="btn btn-success" onclick="startGame()" id="ppBtn">Start <span class="glyphicon glyphicon-play" aria-hidden="true"></span> </button>
+                    <button class="btn btn-warning" onclick="showSetting()" id="settingBtn">Setting <span class="glyphicon glyphicon-cog" aria-hidden="true"></span> </button>
+                    <div class="flex" id="pointMenu">
+                        <span id="5pnt" class="pnt"> ● </span> 5 Point 
+                        <br>
+                        <span id="15pnt" class="pnt"> ● </span> 15 Points 
+                        <br>
+                        <span id="25pnt" class="pnt"> ● </span> 25 Points
+                        <br>
+                        <span class="pnt"><img src="imgs/pig.png" alt=""></span> 50 Points
+                        <br>
+                        <span class="pnt"><img src="imgs/snow.png" alt=""></span> 5 Seconds Ghost-Freeze
+                    </div>
+                </div>
 
             </div>
         </div>
@@ -136,6 +153,23 @@
                 <p class="pull-right"> <span class="glyphicon glyphicon-envelope" aria-hidden="true"></span> Nadavgri@post.bgu.ac.il | Zaksg@post.bgu.ac.il</p>
             </div>
         </footer>
+
+        <div id="dialog-setting" title="Game Setting">
+            <div class="flex"> 
+                <span class="pull-left"> Amount Of Balls </span>
+                <input type="number" class="form-control pull-right" min="50" max="90" value="50" id="ballNum">
+            </div>
+
+            <div class="flex">
+                <span class="pull-left"> Min Time (Secs) </span>
+                <input type="number" class="form-control pull-right" min="60" value="60" id="minSecs">
+            </div>
+
+            <div class="flex">
+                <span class="pull-left"> Amount Of Ghosts </span>
+                <input type="number" class="form-control pull-right" min="1" max="3" value="1" id="ghostNum">
+            </div>
+        </div>
         
         <script src="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>
 		<script src="script.js"></script>

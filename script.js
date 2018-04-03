@@ -3,6 +3,7 @@ var shape = new Object();
 
 //DATA SETS
 var ghosts = {};
+var coin = {};
 var board;
 var teleports = [];
 
@@ -11,7 +12,7 @@ var time_elapsed;
 var interval;
 
 // GAME SETTING
-var _boardSize = 15;
+var _boardSize = 16;
 const STANDARTSIZE = 10; //Keep canvas ratio fixed
 var start_time;
 var pac_color;
@@ -19,18 +20,28 @@ var score;
 var health;
 var hasTeleported = false;
 const foodColor = "#ffeb59"; //Yellowish
-var ghostDifficulty = 0.5; //Higher = easier
+const foodColor15 = "#ff5e5e"; //Redish
+const foodColor25 = "#55f6fc"; //Cyan
+const wallColor = "#3c2683"; //Dark-Blue
+var ghostDifficulty = 0.2; //Higher = easier
+var _Difficulty;
 var lastKeyPressed = 4; //Facing right at the begining
 var prevKey = lastKeyPressed;
+var maxScore;
+var food_remain;
+var totalFood;
+var minimumTime;
+var amountOfGhosts;
 
 /* Board Values Map
     0 - Empty
-    1 - Food
+    1.0-1.2 - Food
     2 - Pacman
     3 - Running Point
     4 - Wall
     5-8 - Ghosts
     9-10 - Teleports
+    11 - Freeze Ghosts for 5 seconds
 */
 
 //Pacman visualisation mapping by direction(right left up down)
@@ -97,6 +108,8 @@ Start();
 function Start() {
     showContainer("Game");
     // showContainer("Welcome");
+
+    $( "#dialog-setting" ).hide();
 }
 
 // Containers and listeners
@@ -135,11 +148,41 @@ function showContainer(container){
         $(".ui-dialog-buttonset>button").addClass("btn-danger");
         $(".ui-dialog-buttonset>button").text("Close");
     }else if(container == "Game"){
+        $("#5pnt").css('color',foodColor);
+        $("#15pnt").css('color',foodColor15);
+        $("#25pnt").css('color',foodColor25);
+        
         $(document).ready(()=>{
-            initBoard();
+            showSetting();
         });
     }
     
+}
+
+function showSetting(){
+    $( "#dialog-setting" ).dialog({
+        modal: true,
+        buttons: {
+            Ok: function() {
+                //Save Data
+                totalFood = $("#ballNum").val();
+                minimumTime = $("#minSecs").val();
+                amountOfGhosts = $("#ghostNum").val();
+
+                if(totalFood > 90 || totalFood < 50 || minimumTime < 60 || amountOfGhosts < 1 || amountOfGhosts > 3)
+                    return;
+
+                $( this ).dialog( "close" );
+
+                initBoard();            
+            }
+        }
+    });
+
+    $(".ui-dialog-titlebar-close").hide();
+    $(".ui-dialog-buttonset>button").addClass("btn");
+    $(".ui-dialog-buttonset>button").addClass("btn-danger");
+    $(".ui-dialog-buttonset>button").text("Save");
 }
 
 function hideAllContainers(){
@@ -351,51 +394,93 @@ function updateHearts(){
 }
 
 function initBoard(){
-    $("#lblUser").text(_ingameUser.username);    
+    //Initialize
+    $("#lblUser").text(_ingameUser.username);  
+    time_elapsed = undefined;
+    lblTime.value = "0.00";
+      
     clearInterval(interval);
-
+    lastKeyPressed = 4; //Start facing right;
     board = new Array();
+
+    let btn = $("#ppBtn");
+
+    btn.html('Start <span class="glyphicon glyphicon-play" aria-hidden="true"></span>');
+    btn.removeClass("btn-danger");
+    btn.addClass("btn-success");
+    btn.attr("onclick","startGame()");
+
+    let mapType = Math.random();
+
     score = 0;
     health = 3;
-    pac_color = "yellow";
     var cnt = 100;
-    var food_remain = 50;
+
+    food_remain = totalFood;
+    ghost_remain = amountOfGhosts;
+
+    var pnt25 = Math.floor(food_remain*0.1);
+    var pnt15 = Math.floor(food_remain*0.3);
+    var pnt5 = food_remain - pnt15 - pnt25;
+
+    maxScore = pnt5*5 + pnt15*15 + pnt25*25 + 50;
     var pacman_remain = 1;
-    start_time = new Date();
+    pac_color = "yellow";
+
     for (var i = 0; i < _boardSize; i++) {
         board[i] = new Array();
         //put obstacles in (i=3,j=3) and (i=3,j=4) and (i=3,j=5), (i=6,j=1) and (i=6,j=2)
         for (var j = 0; j < _boardSize; j++) {
-            if((i==3 && j==3)||(i==3 && j==4)||(i==3 && j==5)||(i==6 && j==1)||(i==6 && j==2)){ //Walls
+            if(isWall(i,j,mapType)){ //Walls
                 board[i][j] = 4;
             }else if((i == 0 && j == 0)){ //Corners
+                ghost_remain--;
                 board[i][j] = 5;
                 ghosts[5] = {i:i,j:j,prev:0,prev_i:i,prev_j:j};
-            }else if((i == (_boardSize - 1) && j == (_boardSize - 1))){ //Corners
+            }else if((i == (_boardSize - 1) && j == (_boardSize - 1)) && ghost_remain > 0){ //Corners
+                ghost_remain--;
                 board[i][j] = 6;
                 ghosts[6] = {i:i,j:j,prev:0,prev_i:i,prev_j:j};
-            }else if((i == (_boardSize - 1) && j == 0)){ //Corners
+            }else if((i == (_boardSize - 1) && j == 0) && ghost_remain > 0){ //Corners
+                ghost_remain--;                
                 board[i][j] = 7;
                 ghosts[7] = {i:i,j:j,prev:0,prev_i:i,prev_j:j};
-            }else if(i == 0 && j == (_boardSize - 1)){ //Corners
+            }else if(i == 0 && j == (_boardSize - 1) && ghost_remain > 0){ //Corners
+                ghost_remain--;                
                 board[i][j] = 8;                    
                 ghosts[8] = {i:i,j:j,prev:0,prev_i:i,prev_j:j};            
-            }else{
-            //     var randomNum = Math.random();
-            //     if (randomNum <= 1.0 * food_remain / cnt) {
-            //         food_remain--;
-            //         board[i][j] = 1;
-            //     }else if (randomNum < 1.0 * (pacman_remain + food_remain) / cnt) {
-            //         shape.i = i;
-            //         shape.j = j;
-            //         pacman_remain--;
-            //         board[i][j] = 2;
-            //     } else {
-                    board[i][j] = 0;
-            //     }
-            // cnt--;
-            }
+            }else
+                board[i][j] = 0;
         }
+    }
+
+    //Taken Care of Empty "D" of walls
+    if(mapType <= 0.5){
+        board[7][12] = -1;
+        board[7][13] = -1;
+        board[8][12] = -1;
+        board[8][13] = -1;
+    }
+
+    //Assign 25Points    
+    for (let i = 0; i < pnt25; i++) {
+        var emptyCell = findRandomEmptyCell(board);
+        board[emptyCell[0]][emptyCell[1]] = 1.2;
+        food_remain--;
+    }
+
+    //Assign 15Points    
+    for (let i = 0; i < pnt15; i++) {
+        var emptyCell = findRandomEmptyCell(board);
+        board[emptyCell[0]][emptyCell[1]] = 1.1;
+        food_remain--;
+    }
+
+    //Assign 5Points        
+    for (let i = 0; i < pnt5; i++) {
+        var emptyCell = findRandomEmptyCell(board);
+        board[emptyCell[0]][emptyCell[1]] = 1;
+        food_remain--;
     }
 
     while(food_remain>0){
@@ -404,11 +489,25 @@ function initBoard(){
         food_remain--;
     }
 
+    //Assign Pacman
     var emptyCell = findRandomEmptyCell(board);
     board[emptyCell[0]][emptyCell[1]] = 2;
     shape.i = emptyCell[0];
     shape.j = emptyCell[1];
     pacman_remain--;
+
+    //Assign Coin    
+    emptyCell = findRandomEmptyCell(board);
+    board[emptyCell[0]][emptyCell[1]] = 3;
+    coin.i = emptyCell[0];
+    coin.j = emptyCell[1];
+    coin.prev = 0;
+    coin.prev_i = coin.i;
+    coin.prev_j = coin.j;
+
+    //Assign Freeze
+    var emptyCell = findRandomEmptyCell(board);
+    board[emptyCell[0]][emptyCell[1]] = 11;
 
     //Display Hearts
     updateHearts();
@@ -425,7 +524,8 @@ function initBoard(){
         keysDown[e.keyCode] = false;
     }, false);
 
-    interval = setInterval(UpdatePosition, 150);
+
+    Draw();
 }
 
 function findRandomEmptyCell(board){
@@ -439,6 +539,40 @@ function findRandomEmptyCell(board){
     }
 
     return [i,j];             
+}
+
+function startGame(){
+    let btn = $("#ppBtn");
+
+    btn.html('Restart <span class="glyphicon glyphicon-stop" aria-hidden="true"></span>');
+    btn.removeClass("btn-primary");
+    btn.addClass("btn-danger");
+    btn.attr("onclick","initBoard()");
+
+    start_time = new Date();
+    pausedTime = start_time;
+
+    interval = setInterval(UpdatePosition, 150);
+}
+
+function isWall(i,j,mapType){
+
+    if(mapType > 0.5)
+        return (i==3 && j==3)||(i==3 && j==4)||(i==3 && j==5)||(i==6 && j==1)||(i==6 && j==2) || (i == 4 & j == 3) || (i==5 & j==3 || (i==6 && j==3)) //Top-left
+        || (i == _boardSize-4 && j == 5) || (i == _boardSize-4 && j == 4) || (i == _boardSize-4 && j == 3) || (i == _boardSize-5 && j == 3) || (i == _boardSize-6 && j == 3) || (i == _boardSize-7 && j == 3)  || (i == _boardSize-7 && j == 2)  || (i == _boardSize-7 && j == 1) //Top-Right
+        || (i == 3 && j == _boardSize -2) || (i == 3 && j == _boardSize -3) || (i == 3 && j == _boardSize -4) || (i == 4 && j == _boardSize -4) || (i == 5 && j == _boardSize -4) || (i == 6 && j == _boardSize -4) || (i == 6 && j == _boardSize -3) || (i == 6 && j == _boardSize -2) //Bottom-Left
+        || (i == _boardSize-4 && j == _boardSize -2) || (i == _boardSize-4 && j == _boardSize -3) || (i == _boardSize-4 && j == _boardSize -4) || (i == _boardSize-5 && j == _boardSize -4) || (i == _boardSize-6 && j == _boardSize -4) || (i == _boardSize-7 && j == _boardSize -4) || (i == _boardSize-7 && j == _boardSize -3) || (i == _boardSize-7 && j == _boardSize -2) //Bottom-Right
+        || (i == _boardSize/2 && j == _boardSize/2) || (i == _boardSize/2-1 && j == _boardSize/2) || (i == _boardSize/2 && j == _boardSize/2+1) || (i == _boardSize/2-1 && j == _boardSize/2+1) || (i == _boardSize/2-2 && j == _boardSize/2+1) || (i == _boardSize/2-3 && j == _boardSize/2+1) || (i == _boardSize/2+1 && j == _boardSize/2+1) || (i == _boardSize/2+2 && j == _boardSize/2+1) || (i == _boardSize/2+3 && j == _boardSize/2+1) || (i == _boardSize/2-4 && j == _boardSize/2+1)
+        || (i == 0 && j == _boardSize/2-1) || (i == 0 && j == _boardSize/2) || (i == _boardSize-1 && j == _boardSize/2-1) || (i == _boardSize-1 && j == _boardSize/2)
+        ;
+    
+    return (i == 1 && j == 1) || (i == 2 && j == 1) || (i == 3 && j == 1) || (i == 4 && j == 1) || (i == 3 && j == 2) || (i == 2 && j == 3) || (i == 1 && j == 4) || (i == 2 && j == 4) || (i == 3 && j == 4) || (i == 4 && j == 4) //Z 
+        || (i == 6 && j == 4) || (i == 6 && j == 3) || (i == 6 && j == 2) || (i == 6 && j == 1) || (i == 7 && j == 1) || (i == 8 && j == 1) || (i == 9 && j == 1) || (i == 9 && j == 2) || (i == 9 && j == 3) || (i == 9 && j == 4) //A
+        || (i == 11 && j == 1) || (i == 12 && j == 2) || (i == 13 && j == 3) || (i == 14 && j == 4) || (i == 11 && j == 4) || (i == 12 && j == 3) || (i == 13 && j == 2) || (i == 14 && j == 1) //X
+        || (i == 1 && j == 14) || (i == 1 && j == 13) || (i == 1 && j == 12) || (i == 1 && j == 11) || (i == 2 && j == 12) || (i == 3 && j == 13)  || (i == 4 && j == 14) || (i == 4 && j == 13) || (i == 4 && j == 12) || (i == 4 && j == 11) //N
+        || (i == 6 && j == 14) || (i == 6 && j == 13) || (i == 6 && j == 12) || (i == 6 && j == 11) || (i == 7 && j == 11) || (i == 9 && j == 12) || (i == 9 && j == 13) || (i == 7 && j == 14) || (i == 8 && j == 14) || (i == 8 && j == 11) //D
+        || (i == 13 && j == 14) || (i == 12 && j == 13) || (i == 11 && j == 12) || (i == 11 && j == 11) || (i == 14 && j == 13) || (i == 15 && j == 12) || (i == 15 && j == 11) //V
+        ;
 }
 
 function setTeleports(){
@@ -479,7 +613,7 @@ function Draw() {
     canvas.width = canvas.width; //clean board
 
     lblScore.value = score;
-    lblTime.value = time_elapsed.toFixed(2);
+    lblTime.value = time_elapsed == undefined ? "0.00" : time_elapsed.toFixed(2);
 
     if(lastKeyPressed === undefined)
         lastKeyPressed = prevKey;
@@ -530,13 +664,41 @@ function Draw() {
                 context.arc(center.x, center.y, 5 * STANDARTSIZE / _boardSize, 0, 2 * Math.PI); // circle
                 context.fillStyle = foodColor; //color 
                 context.fill();
+            }else if (board[i][j] == 1.1) {
+                context.beginPath();
+                context.arc(center.x, center.y, 5 * STANDARTSIZE / _boardSize, 0, 2 * Math.PI); // circle
+                context.fillStyle = foodColor15; //color 
+                context.fill();
+            }else if (board[i][j] == 1.2) {
+                context.beginPath();
+                context.arc(center.x, center.y, 5 * STANDARTSIZE / _boardSize, 0, 2 * Math.PI); // circle
+                context.fillStyle = foodColor25; //color 
+                context.fill();
             }
             //WALLS
             else if (board[i][j] == 4) {
                 context.beginPath();
-                context.rect(center.x - 30 * STANDARTSIZE / _boardSize, center.y - 30 * STANDARTSIZE / _boardSize, 60 * STANDARTSIZE / _boardSize, 60 * STANDARTSIZE / _boardSize);
-                context.fillStyle = "grey"; //color 
+                // context.setLineDash([2,1]);
+                context.strokeStyle =  foodColor;
+                context.rect(center.x - 20 * STANDARTSIZE / _boardSize, center.y - 20 * STANDARTSIZE / _boardSize, 40 * STANDARTSIZE / _boardSize, 40 * STANDARTSIZE / _boardSize);
+                context.fillStyle = wallColor; //color 
                 context.fill();
+                context.stroke();
+            //COIN
+            }else if(board[i][j] == 3){
+                let img = new Image();
+                img.src = `imgs/pig_template.png`;
+                var x = center.x;
+                var y = center.y;
+
+                drawImage(img,x - 15* STANDARTSIZE / _boardSize,y - 20 * STANDARTSIZE / _boardSize, 52 * STANDARTSIZE / _boardSize, 52 * STANDARTSIZE / _boardSize);
+            }else if(board[i][j] == 11){
+                let img = new Image();
+                img.src = `imgs/snow.png`;
+                var x = center.x;
+                var y = center.y;
+
+                drawImage(img,x - 20* STANDARTSIZE / _boardSize,y - 20 * STANDARTSIZE / _boardSize, 48 * STANDARTSIZE / _boardSize, 48 * STANDARTSIZE / _boardSize);
             }
         }
     }
@@ -561,7 +723,8 @@ function UpdatePosition() {
     prevKey = lastKeyPressed || prevKey;
     lastKeyPressed = GetKeyPressed();
 
-    // moveGhosts();
+    moveGhosts();
+    moveCoin();
 
     if(lastKeyPressed >= 1 && lastKeyPressed <= 4)
         hasTeleported = false;
@@ -590,9 +753,29 @@ function UpdatePosition() {
         }
     }
 
-    if(board[shape.i][shape.j]==1){
-        score++;
+    if(shape.i == coin.i && shape.j == coin.j){
+        score += 50;
+        coin.i = -1;
+        coin.j = -1;
+
+        board[shape.i][shape.j] = 2;
     }
+
+    if(board[shape.i][shape.j] == 11){
+        _Difficulty = ghostDifficulty;
+        ghostDifficulty = 1;
+
+        setTimeout(() => {
+            ghostDifficulty = _Difficulty;
+        }, 5000);
+    }
+
+    if(board[shape.i][shape.j] == 1)
+        score += 5;
+    else if(board[shape.i][shape.j]==1.1)
+        score += 15
+    else if(board[shape.i][shape.j]==1.2)
+        score += 25
 
     let teleportTo = pacmanInTeleport();
     if(teleportTo.length > 0 && !hasTeleported){
@@ -610,10 +793,18 @@ function UpdatePosition() {
     });
     
     board[shape.i][shape.j]=2;
-    var currentTime=new Date();
-    time_elapsed=(currentTime-start_time)/1000;
-    if(score>=20&&time_elapsed<=10){
-        pac_color="green";
+
+    var currentTime = new Date();
+    time_elapsed = (currentTime - start_time)/1000;
+
+    if(time_elapsed >= minimumTime){
+        if(score < 150){
+            alert(`Time's UP! You've got ${score} points - You can do better!`);
+            initBoard(); 
+        }else{
+            alert(`Time's UP! You've got ${score} points - We have a winner!`);
+            initBoard(); 
+        }
     }
 
     $.each(ghosts,(ghostIdx, ghost)=>{
@@ -639,12 +830,12 @@ function UpdatePosition() {
         }
     });
 
-    if(score==50){
+    if(score == maxScore){
         Draw();
 
         setTimeout(() => {
             window.clearInterval(interval);
-            window.alert("Game completed");   
+            window.alert(`Game completed in ${time_elapsed} seconds`);   
             initBoard();                  
         }, 50);
 
@@ -692,6 +883,7 @@ function decreaseHealthPoint(){
     shape.i = emptyCell[0];
     shape.j = emptyCell[1];
 
+    lastKeyPressed = 4;
     Draw();
     setTimeout(()=>{
         interval = setInterval(UpdatePosition, 150);
@@ -812,8 +1004,82 @@ function moveAGhost(ghost, ghostIdx, round, hasMoved){
         moveAGhost(ghost, ghostIdx, round+1, hasMoved);
 }
 
+function moveCoin(){
+
+    if(Math.random() >= 0.4 || (coin.j == -1 && coin.i == -1))
+        return;
+
+    let rnd = Math.random();
+
+    //move right
+    if(coin.i+1 != _boardSize && freeForCoin(coin.i + 1, coin.j) && rnd <= 0.25){
+        let prev = coin.prev;
+        coin.prev = board[coin.i+1][coin.j];
+
+        board[coin.i][coin.j] = prev;
+        board[coin.i+1][coin.j] = 3;
+
+        coin.prev_j = coin.j;            
+        coin.prev_i = coin.i;
+        coin.i = coin.i + 1;
+        
+        return;
+    }
+
+    //move left
+    if(coin.i != 0 && freeForCoin(coin.i - 1, coin.j) && rnd > 0.25 && rnd <= 0.5){
+        let prev = coin.prev;
+        coin.prev = board[coin.i-1][coin.j];
+
+        board[coin.i][coin.j] = prev;
+        board[coin.i-1][coin.j] = 3;
+
+        coin.prev_j = coin.j;            
+        coin.prev_i = coin.i;
+        coin.i = coin.i - 1;
+
+        return;            
+    }
+
+    //move up
+    if(coin.j != 0 && freeForCoin(coin.i, coin.j-1) && rnd > 0.5 && rnd <= 0.75){
+        let prev = coin.prev;
+        coin.prev = board[coin.i][coin.j - 1];
+
+        board[coin.i][coin.j] = prev;
+        board[coin.i][coin.j-1] = 3;
+
+        coin.prev_j = coin.j;
+        coin.prev_i = coin.i;                                 
+        coin.j = coin.j - 1;
+
+        return;            
+    }
+
+    //move down
+    if(coin.j + 1 != _boardSize && freeForCoin(coin.i, coin.j + 1)){
+        let prev = coin.prev;
+        coin.prev = board[coin.i][coin.j + 1];
+
+        board[coin.i][coin.j] = prev;
+        board[coin.i][coin.j+1] = 3;
+
+        coin.prev_j = coin.j;   
+        coin.prev_i = coin.i;         
+        coin.j = coin.j + 1;
+
+        return;            
+    }
+
+    moveCoin();
+}
+
 function freeForGhost(i,j){
-    return (board[i][j] == 0 || board[i][j] == 1 || board[i][j] == 2);
+    return (board[i][j] == 0 || board[i][j] == 1 || board[i][j] == 2 || board[i][j] == 1.1 || board[i][j] == 1.2 || board[i][j] == 3 || board[i][j] == 11);
+}
+
+function freeForCoin(i,j){
+    return (board[i][j] == 0 || board[i][j] == 1);
 }
 
 function prevPosition(ghost, direction){
