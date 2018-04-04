@@ -20,9 +20,9 @@ var pac_color;
 var score;
 var health;
 var hasTeleported = false;
-const foodColor = "#ffeb59"; //Yellowish
-const foodColor15 = "#ff5e5e"; //Redish
-const foodColor25 = "#55f6fc"; //Cyan
+var foodColor; // = "#ffeb59"; //Yellowish
+var foodColor15; // = "#ff5e5e"; //Redish
+var foodColor25; // = "#55f6fc"; //Cyan
 const wallColor = "#3c2683"; //Dark-Blue
 var ghostDifficulty = 0.5; //Higher = easier
 var _Difficulty;
@@ -75,6 +75,10 @@ var Register = $("#Register");
 var Login = $("#Login");
 var About = $("#About");
 var Game = $("#Game");
+var _audio = $("#backgroundAudio")[0];
+var _hitSound = $("#hitSound")[0];
+var _winSound = $("#winSound")[0];
+var _looseSound = $("#looseSound")[0];
 
 var users = [{
     'username': 'a',
@@ -157,9 +161,9 @@ function showContainer(container){
         $(".ui-dialog-buttonset>button").addClass("btn-danger");
         $(".ui-dialog-buttonset>button").text("Close");
     }else if(container == "Game"){
-        $("#5pnt").css('color',foodColor);
-        $("#15pnt").css('color',foodColor15);
-        $("#25pnt").css('color',foodColor25);
+        $("#5pnt").hide();
+        $("#15pnt").hide();
+        $("#25pnt").hide();
         
         $(document).ready(()=>{
             showSetting();
@@ -177,12 +181,23 @@ function showSetting(){
                 totalFood = $("#ballNum").val();
                 minimumTime = $("#minSecs").val();
                 amountOfGhosts = $("#ghostNum").val();
+                foodColor = $("#5col").val();
+                foodColor15 = $("#15col").val();
+                foodColor25 = $("#25col").val();
 
                 if(totalFood > 90 || totalFood < 50 || minimumTime < 60 || amountOfGhosts < 1 || amountOfGhosts > 3)
                     return;
 
+                $("#5pnt").css('color',foodColor);
+                $("#5pnt").show();
+                $("#15pnt").css('color',foodColor15);
+                $("#15pnt").show();
+                $("#25pnt").css('color',foodColor25);
+                $("#25pnt").show();
+                
                 $( this ).dialog( "close" );
 
+                _audio.load();
                 initBoard();            
             }
         }
@@ -438,6 +453,7 @@ function submitLogin(){
 //Game
 function initBoard(){
     //Initialize
+    _audio.load();
     $("#lblUser").text(_ingameUser.username);  
     time_elapsed = undefined;
     lblTime.value = "0.00";
@@ -497,12 +513,14 @@ function initBoard(){
         }
     }
 
-    //Taken Care of Empty "D" of walls
+    //Taken Care of Empty "D" & "A" of walls
     if(mapType <= 0.5){
         board[7][12] = -1;
         board[7][13] = -1;
         board[8][12] = -1;
         board[8][13] = -1;
+        board[7][2] = -1;
+        board[8][2] = -1;
     }
 
     //Assign 25Points    
@@ -582,6 +600,7 @@ function startGame(){
     start_time = new Date();
     pausedTime = start_time;
 
+    _audio.play();
     interval = setInterval(UpdatePosition, 150);
 }
 
@@ -792,15 +811,21 @@ function UpdatePosition() {
     time_elapsed = (currentTime - start_time)/1000;
 
     if(time_elapsed >= minimumTime){
-        if(score < 150){
-            alert(`Time's UP! You've got ${score} points - You can do better!`);
-            addHighscore();
-            initBoard(); 
-        }else{
-            alert(`Time's UP! You've got ${score} points - We have a winner!`);
-            addHighscore();            
-            initBoard(); 
-        }
+        _audio.pause();
+
+        setTimeout(() => {
+            if(score < 150){
+                _looseSound.play();
+                alert(`Time's UP! You've got ${score} points - You can do better!`);
+                addHighscore();
+                initBoard(); 
+            }else{
+                _winSound.play();
+                alert(`Time's UP! You've got ${score} points - We have a winner!`);
+                addHighscore();            
+                initBoard(); 
+            }
+        }, 20);
     }
 
     $.each(ghosts,(ghostIdx, ghost)=>{
@@ -809,20 +834,33 @@ function UpdatePosition() {
             Draw();
             
             setTimeout(() => {
+                _audio.pause(); 
                 window.clearInterval(interval);
                 health--;
                 updateHearts();
 
-                if(health > 0){
-                    alert(`OH NO! ${health} tries left for you.`);                    
-                    decreaseHealthPoint();      
+                setTimeout(()=>{
 
-                }else{                    
-                    addHighscore();                    
-                    window.alert("You Lost - Game OVER!");
-                    initBoard(); 
-                }
-
+                    if(health > 0){
+                        _hitSound.play(); 
+                        
+                        setTimeout(() => {
+                            alert(`OH NO! ${health} tries left for you.`);                    
+                            decreaseHealthPoint();      
+                            _audio.play();
+                        }, 10);
+                    
+                    }else{      
+                        _looseSound.play();
+                        
+                        setTimeout(()=>{
+                            addHighscore();                    
+                            window.alert("You Lost - Game OVER!");
+                            initBoard(); 
+                        }, 10);      
+                    }
+                }, 5);
+                
             }, 5);
         }
     });
@@ -831,10 +869,15 @@ function UpdatePosition() {
         Draw();
 
         setTimeout(() => {
-            addHighscore();            
-            window.clearInterval(interval);
-            window.alert(`Game completed in ${time_elapsed} seconds`);   
-            initBoard();                  
+            _audio.pause();            
+            addHighscore(); 
+            
+            setTimeout(()=>{
+                _winSound.play();
+                window.clearInterval(interval);
+                window.alert(`Game completed in ${time_elapsed} seconds`);   
+                initBoard();                  
+            }, 10);
         }, 50);
 
     }else{
@@ -1105,7 +1148,7 @@ function isWall(i,j,mapType){
         ;
     
     return (i == 1 && j == 1) || (i == 2 && j == 1) || (i == 3 && j == 1) || (i == 4 && j == 1) || (i == 3 && j == 2) || (i == 2 && j == 3) || (i == 1 && j == 4) || (i == 2 && j == 4) || (i == 3 && j == 4) || (i == 4 && j == 4) //Z 
-        || (i == 6 && j == 4) || (i == 6 && j == 3) || (i == 6 && j == 2) || (i == 6 && j == 1) || (i == 7 && j == 1) || (i == 8 && j == 1) || (i == 9 && j == 1) || (i == 9 && j == 2) || (i == 9 && j == 3) || (i == 9 && j == 4) //A
+        || (i == 6 && j == 4) || (i == 6 && j == 3) || (i == 6 && j == 2) || (i == 6 && j == 1) || (i == 7 && j == 1) || (i == 8 && j == 1) || (i == 9 && j == 1) || (i == 9 && j == 2) || (i == 9 && j == 3) || (i == 9 && j == 4) || (i == 7 && j == 3) || (i == 8 && j == 3)//A
         || (i == 11 && j == 1) || (i == 12 && j == 2) || (i == 13 && j == 3) || (i == 14 && j == 4) || (i == 11 && j == 4) || (i == 12 && j == 3) || (i == 13 && j == 2) || (i == 14 && j == 1) //X
         || (i == 1 && j == 14) || (i == 1 && j == 13) || (i == 1 && j == 12) || (i == 1 && j == 11) || (i == 2 && j == 12) || (i == 3 && j == 13)  || (i == 4 && j == 14) || (i == 4 && j == 13) || (i == 4 && j == 12) || (i == 4 && j == 11) //N
         || (i == 6 && j == 14) || (i == 6 && j == 13) || (i == 6 && j == 12) || (i == 6 && j == 11) || (i == 7 && j == 11) || (i == 9 && j == 12) || (i == 9 && j == 13) || (i == 7 && j == 14) || (i == 8 && j == 14) || (i == 8 && j == 11) //D
@@ -1137,7 +1180,7 @@ function pacmanInTeleport(){
 }
 
 function freeForGhost(i,j){
-    return (board[i][j] == 0 || board[i][j] == 1 || board[i][j] == 2 || board[i][j] == 1.1 || board[i][j] == 1.2 || board[i][j] == 3 || board[i][j] == 11);
+    return (board[i][j] == 11 || board[i][j] == 10 || board[i][j] == 9 || board[i][j] == 0 || board[i][j] == 1 || board[i][j] == 2 || board[i][j] == 1.1 || board[i][j] == 1.2 || board[i][j] == 3 || board[i][j] == 11);
 }
 
 function freeForCoin(i,j){
@@ -1172,28 +1215,3 @@ function addHighscore(){
         "time": time_elapsed
     });
 }
-
-/* BEST SCORE BOARD SORTING 
-var x = [{
-	"name":"nadav",
-	"score":10,
-	"time":15
-},
-{
-	"name":"guy",
-	"score":12,
-	"time":20
-},
-{
-	"name":"netta",
-	"score":10,
-	"time":16
-}
-];
-
-var y = x.sort(function(a,b){
-	if(a.score < b.score) return true;
-	else if(a.score == b.score) return a.time > b.time;
-});
-
-*/

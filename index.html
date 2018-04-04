@@ -172,6 +172,21 @@
                 <span class="pull-left"> Amount Of Ghosts </span>
                 <input type="number" class="form-control pull-right" min="1" max="3" value="1" id="ghostNum">
             </div>
+
+            <div class="flex">
+                <span class="pull-left"> 5 Points Color </span>
+                <input type="color" class="form-control pull-right" value="#ffeb59" id="5col">
+            </div>
+
+            <div class="flex">
+                <span class="pull-left"> 15 Points Color </span>
+                <input type="color" class="form-control pull-right" value="#ff5e5e" id="15col">
+            </div>
+
+            <div class="flex">
+                <span class="pull-left"> 25 Points Color </span>
+                <input type="color" class="form-control pull-right" value="#55f6fc" id="25col">
+            </div>
         </div>
 
         <div id="dialog-scores" title="Highscores">
@@ -188,6 +203,11 @@
                 </tbody>
             </table>
         </div>
+
+        <audio id="backgroundAudio"><source src="sound/ost.mp3" type="audio/mpeg" /></audio>
+        <audio id="winSound"><source src="sound/win.mp3" type="audio/mpeg" /></audio>
+        <audio id="looseSound"><source src="sound/loose.mp3" type="audio/mpeg" /></audio>
+        <audio id="hitSound"><source src="sound/hit.mp3" type="audio/mpeg" /></audio>
         
         <script src="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js"></script>
 		<script src="script.js"></script>
