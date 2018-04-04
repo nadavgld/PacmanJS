@@ -173,6 +173,7 @@ function showContainer(container){
 }
 
 function showSetting(){
+    clearInterval(interval);
     $( "#dialog-setting" ).dialog({
         modal: true,
         buttons: {
@@ -454,6 +455,9 @@ function submitLogin(){
 function initBoard(){
     //Initialize
     _audio.load();
+    ghosts = {};
+    teleports = [];
+
     $("#lblUser").text(_ingameUser.username);  
     time_elapsed = undefined;
     lblTime.value = "0.00";
@@ -590,6 +594,8 @@ function initBoard(){
 }
 
 function startGame(){
+    clearInterval(interval);
+    
     let btn = $("#ppBtn");
 
     btn.html('Restart <span class="glyphicon glyphicon-stop" aria-hidden="true"></span>');
@@ -835,6 +841,7 @@ function UpdatePosition() {
             
             setTimeout(() => {
                 _audio.pause(); 
+                var stopTime = new Date();
                 window.clearInterval(interval);
                 health--;
                 updateHearts();
@@ -844,9 +851,11 @@ function UpdatePosition() {
                     if(health > 0){
                         _hitSound.play(); 
                         
+                        var stopTime = new Date();
                         setTimeout(() => {
-                            alert(`OH NO! ${health} tries left for you.`);                    
-                            decreaseHealthPoint();      
+                            alert(`OH NO! ${health} tries left for you.`);    
+
+                            decreaseHealthPoint(stopTime);      
                             _audio.play();
                         }, 10);
                     
@@ -1046,7 +1055,7 @@ function moveCoin(){
 
 
 //Hit by a ghost
-function decreaseHealthPoint(){
+function decreaseHealthPoint(stopTime){
 
     $.each(ghosts, (idx, ghost)=>{
         if(ghost == undefined)
@@ -1085,9 +1094,14 @@ function decreaseHealthPoint(){
     shape.i = emptyCell[0];
     shape.j = emptyCell[1];
 
-    lastKeyPressed = 4;
+    lastKeyPressed = 4;  
     Draw();
+
     setTimeout(()=>{
+        var resumeTime = new Date();
+        start_time = new Date(start_time.getTime() + (resumeTime - stopTime));
+    
+        time_elapsed = (new Date() - start_time)/1000;  
         interval = setInterval(UpdatePosition, 150);
     }, 1500);
 
