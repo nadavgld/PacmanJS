@@ -14,7 +14,7 @@ var interval;
 
 // GAME SETTING
 var _boardSize = 16;
-const STANDARTSIZE = 10; //Keep canvas ratio fixed
+const STANDARTSIZE = 9.166666666666667; //Keep canvas ratio fixed
 var start_time;
 var pac_color;
 var score;
@@ -112,8 +112,8 @@ Start();
 
 //Website Loaded
 function Start() {
-    // showContainer("Game");
-    showContainer("Welcome");
+    showContainer("Game");
+    // showContainer("Welcome");
 
     $( "#dialog-setting" ).hide();
     $( "#dialog-scores" ).hide();
