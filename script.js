@@ -112,8 +112,8 @@ Start();
 
 //Website Loaded
 function Start() {
-    showContainer("Game");
-    // showContainer("Welcome");
+    // showContainer("Game");
+    showContainer("Welcome");
 
     $( "#dialog-setting" ).hide();
     $( "#dialog-scores" ).hide();
