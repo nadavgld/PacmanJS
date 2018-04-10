@@ -141,7 +141,7 @@ function showContainer(container){
         _formValidation = newFormValidation();
         setFormDates();
         $("#form_username").focus();
-        $("#regForm>.btn").prop('disabled',true);
+        // $("#regForm>.btn").prop('disabled',true);
     }else if(container == "Login"){
         clearForm("logForm");        
         $("#loginMsg").hide();
@@ -299,7 +299,8 @@ function formIsOK(form, prop){
             formIsDone = formIsDone && false;
     });
 
-    $("#regForm>.btn").prop('disabled',!formIsDone);
+    return formIsDone;
+    // $("#regForm>.btn").prop('disabled',!formIsDone);
 }
 
 function checkPassword(form){
@@ -384,32 +385,45 @@ function validateEmail(email) {
 }
 
 function submitForm(){
-    var pass = $("#form_password").val().toString().trim();
-    var first = $("#form_first").val().toString().trim();
-    var last = $("#form_last").val().toString().trim();
-    var mail = $("#form_email").val().toString().trim();
-    var user = $("#form_username").val().toString().trim();
 
-    var date = "";
+    checkUsername($("#form_username"));
+    checkPassword($("#form_password"));
+    checkFirst($("#form_first"));
+    checkLast($("#form_last"));
+    checkMail($("#form_email"));
 
-    $(".dateForm").each((k,v)=>{
-        if(k != 0)
-            date += "." + $(v).val();
-        else
-            date += "" + $(v).val();
-    });
+    if(formIsOK()){
 
-    users.push({
-        'username': user,
-        'password': pass,
-        'first': first,
-        'last': last,
-        'email': mail,
-        'date': date
-    });
-
-    clearForm("regForm");
-    showContainer('Login');
+        setTimeout(()=>{
+            var pass = $("#form_password").val().toString().trim();
+            var first = $("#form_first").val().toString().trim();
+            var last = $("#form_last").val().toString().trim();
+            var mail = $("#form_email").val().toString().trim();
+            var user = $("#form_username").val().toString().trim();
+            
+            var date = "";
+            
+            $(".dateForm").each((k,v)=>{
+                if(k != 0)
+                date += "." + $(v).val();
+                else
+                date += "" + $(v).val();
+            });
+            
+            users.push({
+                'username': user,
+                'password': pass,
+                'first': first,
+                'last': last,
+                'email': mail,
+                'date': date
+            });
+            
+            alert("Registration done successfully");
+            clearForm("regForm");
+            showContainer('Login');
+        }, 100);
+    }
 }
 
 function clearForm(formID){
