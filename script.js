@@ -7,6 +7,7 @@ var coin = {};
 var board;
 var teleports = [];
 var highscores = [];
+var keysDown = [];
 
 //INTERVAL
 var time_elapsed;    
@@ -33,6 +34,7 @@ var food_remain;
 var totalFood;
 var minimumTime;
 var amountOfGhosts;
+var _isDead = false;
 
 /* Board Values Map
     0 - Empty
@@ -465,6 +467,7 @@ function submitLogin(){
 
 //////////////////////////////////////////////////////////////////////////////////
 
+_audio.volume = 0;
 //Game
 function initBoard(){
     //Initialize
@@ -593,8 +596,6 @@ function initBoard(){
     
     //Teleports
     setTeleports();
-    
-    keysDown = {};
 
     addEventListener("keydown", function (e) {
         keysDown[e.keyCode] = true;
@@ -602,7 +603,6 @@ function initBoard(){
     addEventListener("keyup", function (e) {
         keysDown[e.keyCode] = false;
     }, false);
-
 
     Draw();
 }
@@ -642,12 +642,13 @@ function setTeleports(){
 
 //Drawing on canvs
 function Draw() {
+    
     canvas.width = canvas.width; //clean board
 
     lblScore.value = score;
     lblTime.value = time_elapsed == undefined ? "0.00" : time_elapsed.toFixed(2);
 
-    if(lastKeyPressed === undefined)
+    if(lastKeyPressed === undefined || lastKeyPressed == null)
         lastKeyPressed = prevKey;
 
     for (var i = 0; i < _boardSize; i++) {
@@ -853,6 +854,7 @@ function UpdatePosition() {
             board[ghost.i][ghost.j] = ghostIdx;
             Draw();
             
+            _isDead = true;
             setTimeout(() => {
                 _audio.pause(); 
                 var stopTime = new Date();
@@ -862,6 +864,8 @@ function UpdatePosition() {
 
                 setTimeout(()=>{
 
+                    keysDown.map((v,i)=>{keysDown[i] = false;});
+                    
                     if(health > 0){
                         _hitSound.play(); 
                         
@@ -871,6 +875,7 @@ function UpdatePosition() {
 
                             decreaseHealthPoint(stopTime);      
                             _audio.play();
+                            _isDead = false;
                         }, 10);
                     
                     }else{      
@@ -1133,6 +1138,8 @@ function updateHearts(){
 //Game Help-Functions
 //Listener
 function GetKeyPressed() {
+    if(_isDead)
+        return;
     //UP
     if (keysDown[38])
         return 1;
