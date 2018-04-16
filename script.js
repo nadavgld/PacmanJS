@@ -874,7 +874,11 @@ function UpdatePosition() {
 
                             decreaseHealthPoint(stopTime);      
                             _audio.play();
-                            _isDead = false;
+
+                            setTimeout(()=>{
+                                _isDead = false;
+                            },10);
+                            
                         }, 10);
                     
                     }else{      
