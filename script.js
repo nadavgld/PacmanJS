@@ -311,7 +311,8 @@ function checkPassword(form){
     if(pass.length == 0 && _formValidation.password == false)
         return;
 
-    if(pass.length < 8){
+    var regex = /^(?=.*[0-9])(?=.*[a-zA-Z])([a-zA-Z0-9]+)$/;
+    if(pass.length < 8 || !regex.test(pass)){
         formHasErr(form,'password');
     }else{
         formIsOK(form,'password');
